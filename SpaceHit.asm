@@ -1,10 +1,9 @@
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-; 				SPACE HIT
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-;
-;
-;
-;
+; Trabalho Laboratorio de Organizacao e Arquitetura de Computadores
+; Jogo: Space Hit
+; 
+; Isadora Carolina Siebert - 11345580
+; Marlon 
+
 
 
 
