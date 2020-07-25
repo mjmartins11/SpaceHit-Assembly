@@ -4,10 +4,6 @@
 ; Isadora Carolina Siebert   NUSP: 11345580
 ; Marlon
 
-
-; Hello World - Escreve mensagem armazenada na memoria na tela
-
-
 ; ------- TABELA DE CORES -------
 ; adicione ao caracter para Selecionar a cor correspondente
 
@@ -852,7 +848,7 @@ imprimeTelaIni:
 	call imprimeNum
 	
 	loadn r5, #'|'
-	loadn r0, #29
+	loadn r0, #50
 	loadn r1, #0
 	loadn r2, #40
 LoopImprimeTelaIni:
@@ -860,8 +856,8 @@ LoopImprimeTelaIni:
 	loadn r4, #3
 	add r3, r3, r4
 	outchar r5, r3
-	loadn r4,#11
-	add r3,r4,r3
+	loadn r4, #153
+	add r3, r4, r3
 	outchar r5, r3
 	
 	inc r1
