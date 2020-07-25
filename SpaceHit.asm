@@ -24,13 +24,12 @@
 ; 3584 aqua							1110 0000
 ; 3840 branco						1111 0000
 
+; Coracao provisorio: S2 <3
 jmp main
 
 pos : var #30
 char : var #30
 linha : string "=================================="
-StrScore : string "Score:"
-StrVelocidade : string "Velocidade:" ; verificar necessidade
 StrPerdeu: string "FIM! Voce perdeu!"
 StrPressEnter: string "Aperte ENTER para"
 StrJogarNovmente: string "jogar novamente!"
@@ -40,7 +39,7 @@ StrFinalizar: string "finalizar programa"
 
 score : var #1
 pospessoa : var #1
-cont : var #1 ; usado para contar o numero de linhas entre cada letra que cai (PRA QUE? VAMOS DESCOBRIR)
+cont : var #1 ; usado para contar o numero de linhas entre cada letra que cai 
 tecla : var #1 
 derrota : var #1 
 velocidade : var #1
@@ -60,7 +59,7 @@ reinicia_variaveis_do_jogo:
 	loadn r0, #char
 	loadn r1, #30
 	loadn r2, #0
-	call setVetor; VERIFICAR:::: SET CHAR POS PARA {0,0,0,..,0}
+	call setVetor ; VERIFICAR:::: SET CHAR POS PARA {0,0,0,..,0}
 	
 	loadn r0 , #0 
 	store score, r0
@@ -131,8 +130,8 @@ loopmain:
 	call atualizaScore
 	
 	load r0, velocidade
-	loadn r1, #119
-	call imprimeNum
+	;loadn r1, #119
+	;call imprimeNum
 	
 	call verificaDerrota ; e salva resposta em variavel global derrota
 	load r0, derrota
@@ -182,7 +181,7 @@ imprimeTelaDerrota:
 	push r1
 	push r2
 	
-	loadn r0, #583			; Posicao na tela onde a mensagem sera' escrita (VAMOS MUDAR PRO MEIO)
+	loadn r0, #534			; Posicao na tela onde a mensagem sera' escrita (VAMOS MUDAR PRO MEIO)
 	loadn r1, #StrPerdeu	; Carrega r1 com o endereco do vetor que contem a mensagem
 	loadn r2, #0			; Seleciona a COR da Mensagem
 	call Imprimestr
@@ -386,18 +385,13 @@ fim_wait_com_comando:
 
 
 
-
-
-
-
-
 move_direia:
 	push r0
 	push r1
 	
 	load r0, pospessoa
 	
-	loadn r1, #12
+	loadn r1, #34
 	;if(r0 == 38) nao move direita
 	;else move
 	
@@ -598,7 +592,7 @@ atualizaTela:
 	load r6, cont
 	add r7,r6,r1
 	
-	loadn r1, #6 ;numero de linhas entre cada letra
+	loadn r1, #8    ; numero de linhas entre cada letra
 	mod r7, r7, r1
 	store cont, r7
 	
@@ -628,7 +622,7 @@ atualizaTela:
 	call gera_rand
 	load r1, rand
 	
-	loadn r2, #10 ; TAMANHO TA TELA QUE CAI AS LETRAS VAI SER 10
+	loadn r2, #30 ; largura da tela onde as letras surgem
 	mod r1,r1,r2 ; r1 = r1 % 20
 	loadn r2, #4
 	add r1,r1,r2
@@ -828,18 +822,8 @@ imprimeTelaIni:
 	push r4
 	push r5
 	
-	loadn r0, #1163	; Posicao na tela onde a mensagem sera' escrita
+	loadn r0, #1163		; Posicao na tela onde a mensagem sera' escrita
 	loadn r1, #linha	; Carrega r1 com o endereco do vetor que contem a mensagem
-	loadn r2, #0		; Seleciona a COR da Mensagem
-	call Imprimestr
-	
-	loadn r0, #25	; Posicao na tela onde a mensagem sera' escrita
-	loadn r1, #StrScore	; Carrega r1 com o endereco do vetor que contem a mensagem
-	loadn r2, #0		; Seleciona a COR da Mensagem
-	call Imprimestr
-	
-	loadn r0, #100	; Posicao na tela onde a mensagem sera' escrita
-	loadn r1, #StrVelocidade	; Carrega r1 com o endereco do vetor que contem a mensagem
 	loadn r2, #0		; Seleciona a COR da Mensagem
 	call Imprimestr
 	
@@ -848,7 +832,7 @@ imprimeTelaIni:
 	call imprimeNum
 	
 	loadn r5, #'|'
-	loadn r0, #50
+	loadn r0, #40
 	loadn r1, #0
 	loadn r2, #40
 LoopImprimeTelaIni:
