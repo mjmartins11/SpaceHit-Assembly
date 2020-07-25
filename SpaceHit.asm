@@ -1,1200 +1,989 @@
-; Trabalho Laboratorio de Organizacao e Arquitetura de Computadores
-; Jogo: Space Hit
-; 
-; Isadora Carolina Siebert - 11345580
-; Marlon 
+; Hello World - Escreve mensagem armazenada na memoria na tela
 
 
+; ------- TABELA DE CORES -------
+; adicione ao caracter para Selecionar a cor correspondente
 
+; 0 branco							0000 0000
+; 256 marrom						0001 0000
+; 512 verde							0010 0000
+; 768 oliva							0011 0000
+; 1024 azul marinho					0100 0000
+; 1280 roxo							0101 0000
+; 1536 teal							0110 0000
+; 1792 prata						0111 0000
+; 2048 cinza						1000 0000
+; 2304 vermelho						1001 0000
+; 2560 lima							1010 0000
+; 2816 amarelo						1011 0000
+; 3072 azul							1100 0000
+; 3328 rosa							1101 0000
+; 3584 aqua							1110 0000
+; 3840 branco						1111 0000
 
 jmp main
 
-Letra: var #1
+pos : var #30
+char : var #30
+linha : string "============"
+StrScore : string "Score:"
+StrVelocidade : string "Velocidade:"
+StrPerdeu: string "Voce Perdeu"
+StrPressEnter: string "Aperte ENTER para"
+StrJogarNovmente: string"jogar novamente"
+StrOuP: string "Ou 'p' para"
+StrFinalizar: string "finalizar programa" 
 
-boneco: string "+" 					; Char para desenhar o personagem (substituido no charmap)
-obstaculo_cactus_baixo: string "@"	; Char para desenhar o personagem (substituido no charmap)
-obstaculo_cactus_alto: string "?"	; Char para desenhar o personagem (substituido no charmap)
-obstaculo_passaro_cima: string "<"	; Char para desenhar o personagem (substituido no charmap)
-obstaculo_passaro_baixo: string ">"	; Char para desenhar o personagem (substituido no charmap)
-placar : string "SCORE: " 			; Placar
 
-posperso: var #490 					; Posicao do dinossauro na tela
-pontos: var #1						; Variavel inteira para a pontuacao
+score : var #1
 
-delay1: var #50				; Variaveis para o delay (quanto maior, mais lento)
-delay2: var #0
+pospessoa : var #1
 
-Rand : var #30						; Numeros pseudo-randomicos entre 1 e 3	
-	static Rand + #0, #1
-	static Rand + #1, #2
-	static Rand + #2, #2
-	static Rand + #3, #1
-	static Rand + #4, #1
-	static Rand + #5, #2
-	static Rand + #6, #1
-	static Rand + #7, #2
-	static Rand + #8, #1
-	static Rand + #9, #2
-	static Rand + #10, #2
-	static Rand + #11, #1
-	static Rand + #12, #1
-	static Rand + #13, #2
-	static Rand + #14, #2
-	static Rand + #15, #1
-	static Rand + #16, #2
-	static Rand + #17, #2
-	static Rand + #18, #1
-	static Rand + #19, #2
-	static Rand + #20, #1
-	static Rand + #20, #2
-	static Rand + #21, #1
-	static Rand + #22, #2
-	static Rand + #23, #2
-	static Rand + #24, #1
-	static Rand + #25, #1
-	static Rand + #26, #1
-	static Rand + #27, #2
-	static Rand + #28, #2
-	static Rand + #29, #2
+cont : var #1 ; usado para contar o numero de linhas entre cada letra que cai
 
+tecla : var #1 
+
+derrota : var #1 
+
+velocidade : var #1
+
+estado: var #1
+
+reinicia_variaveis_do_jogo:
+	push r0
+	push r1
+	push r2
 	
-IncRand: var #1						; Variavel para incrementar os numeros randomicos
+	loadn r0, #pos
+	loadn r1, #30
+	loadn r2, #40
+	call setVetor ;SET VETOR POS PARA {40,40,40,..,40}
+	
+	loadn r0, #char
+	loadn r1, #30
+	loadn r2, #0
+	call setVetor;SET CHAR POS PARA {0,0,0,..,0}
+	
+	loadn r0 , #0 
+	store score, r0
+	store derrota, r0
+	store cont, r0
+	store estado, r0
+	
+	loadn r0 , #8
+	store pospessoa, r0
+	
+	loadn r0 , #255
+	store tecla, r0
+	
+	loadn r0 , #4000
+	store velocidade, r0
+	
+	
+	pop r2
+	pop r1
+	pop r0
+	rts
 
+rand : var #1
+static rand, #53 ;SEED INICIAL
+;FUNC DE GERAR RAND NUMS DE 0 A 255
+; (SEED * a + c) % p
+gera_rand:
+	push r0
+	push r1
+	push r2
+	push r3
+	
+	load r0, rand ;SEED
+	loadn r1,#97  ;a
+	loadn r2, #133 ;c
+	loadn r3, #256 ;p
+	mul r0,r0,r1  ; SEED*a
+	add r0,r0,r2  ;	SEED*a + c
+	mod r0,r0,r3  ; (SEED*a + c) % p
+	
+	store rand, r0
+	
+	pop r3
+	pop r2
+	pop r1
+	pop r0
+	rts
 
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-; 				MAIN
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+;---- Inicio do Programa Principal -----
 
 main:
-	
-	call ApagaTela
-	loadn r1, #telaInicioLinha0		; Imprime a tela inicial do jogo na cor marrom;
-	loadn r2, #1536
-	call ImprimeTela
-	
-	loadn r1, #telaBarrasLinha0		; Imprime a tela inicial do jogo na cor prata;
-	loadn r2, #1280
-	call ImprimetelaGameOver
-	
-	jmp Loop_Inicio				; Loop do inicio do jogo;
-	
-	
-	Loop_Inicio:
-		
-		call DigLetra 			; Le uma letra do teclado
-		
-		loadn r0, #' '			; Quando a tecla espaco for acionada, comeca o jogo
-		load r1, Letra
-		cmp r0, r1
-		jne Loop_Inicio
-	
-	
-	setamento:					; Inicializa a pontuacao e os delays
-		
-		push r2
-		loadn r2, #0
-		store pontos, r2
-		pop r2
-		
-		loadn r0, #70
-		store delay1, r0
-		
-		loadn r0, #100
-		store delay2, r0
-		
 
-	InicioJogo:					; Inicializa variaveis e registradores usados no jogo, antes de comecar o loop principal		
-		
-		call ApagaTela			;	Imprime a tela inicial do jogo
-		loadn r1, #telaPadraoLinha0
-		loadn r2, #768
-		call ImprimeTela
-		
-		loadn R1, #telaChaoLinha0	; Endereco da primeira linha do cenario
-		loadn R2, #768
-		call ImprimetelaGameOver   	; Rotina que imprime o cenario
-		
-		loadn r0, #31			; Imprime a tela inicial
-		loadn r1, #placar		
-		loadn r2, #0
-		call ImprimeStr
-		
-		loadn r7, #' '			; Parametro para saber se a tecla certa foi pressionada
-		loadn r6, #490			; Posicao do boneco na tela (fixa no eixo x e variavel no eixo y)
-		loadn r2, #519			; Posicao do obstaculo na tela (fixa no eixo x e variavel no eixo y)
-		load r4, boneco			; Guardando a string do boneco no registrador r4
-		load r1, obstaculo_cactus_baixo	; Guardando a string do obstaculo no registrador r1
-		loadn r5, #0			; Ciclo do pulo (0 = chao, entre 1 e 3 = sobe, maior que 3 = desce)
-		
-		
-		jmp LoopJogo
+
+	call reinicia_variaveis_do_jogo ;ou inicia, apenas zera tudo
 	
-		LoopJogo:					; Loop principal do jogo
-		
-			call ChecaColisao		; Checa se houve colisao
+	;call Imprimestr   ;  r0 = Posicao da tela que o primeiro caractere da mensagem sera' impresso;  r1 = endereco onde comeca a mensagem; r2 = cor da mensagem.   Obs: a mensagem sera' impressa ate' encontrar "/0"
+	call imprimeTelaIni
+	call desenha_pessoa
+	
+	
+	
+	loadn r3, #1
+	loadn r4, #29
+	loadn r5, #40
+	
+	
+loopmain:	
+
+	;call teste_rand
+	
+	call atualizaTela
+	
+	call atualizaScore
+	
+	load r0, velocidade
+	loadn r1, #119
+	call imprimeNum
+	
+	call verificaDerrota ; e salva resposta em variavel global derrota
+	load r0,derrota
+	cmp r0,r3 ;se derrota == 1
+	jeq telaDeDerrota
+	
+	call wait_com_comando
+	
+	
+	jmp loopmain
+	
+telaDeDerrota:
+	;print DERROTA
+	;PARA RECOMEÇAR CLICAR EM ENTER
+	;CRIAR FUNC Q RESETA VARIAVEIS!!
+	call imprimeTelaDerrota
+	
+	inchar r0
+	loadn r1, #13 ; começa novo jogo se apertar 'Enter'
+	loadn r2, #'p' ; finaliza jogo se apertar 'p'
+	
+	cmp r0, r2
+	jeq fimPrograma
+	cmp r0,r1
+	jne telaDeDerrota
+	call apagaTelaInteira
+	jmp main
+fimPrograma:	
+	halt
+	
+
+;---- Fim do Programa Principal -----
+	
+	;passa por vetor apagando tela
+	
+	;shifta vetor
+	
+	;print vetor na tela
+	
+	
+;---- Inicio das Subrotinas -----
+
+
+
+imprimeTelaDerrota:
+	push r0
+	push r1
+	push r2
+	
+	loadn r0, #583	; Posicao na tela onde a mensagem sera' escrita
+	loadn r1, #StrPerdeu	; Carrega r1 com o endereco do vetor que contem a mensagem
+	loadn r2, #0		; Seleciona a COR da Mensagem
+	call Imprimestr
+	
+	loadn r0, #620	; Posicao na tela onde a mensagem sera' escrita
+	loadn r1, #StrPressEnter ; Carrega r1 com o endereco do vetor que contem a mensagem
+	loadn r2, #0		; Seleciona a COR da Mensagem
+	call Imprimestr
+	
+	loadn r0, #661	; Posicao na tela onde a mensagem sera' escrita
+	loadn r1, #StrJogarNovmente ; Carrega r1 com o endereco do vetor que contem a mensagem
+	loadn r2, #0		; Seleciona a COR da Mensagem
+	call Imprimestr
+	
+	loadn r0, #703	; Posicao na tela onde a mensagem sera' escrita
+	loadn r1, #StrOuP ; Carrega r1 com o endereco do vetor que contem a mensagem
+	loadn r2, #0		; Seleciona a COR da Mensagem
+	call Imprimestr
+	
+	loadn r0, #740	; Posicao na tela onde a mensagem sera' escrita
+	loadn r1, #StrFinalizar ; Carrega r1 com o endereco do vetor que contem a mensagem
+	loadn r2, #0		; Seleciona a COR da Mensagem
+	call Imprimestr
+	
+	
+	pop r2
+	pop r1
+	pop r0
+	rts
+
+apagaTelaInteira:
+	loadn r0, #1200
+	loadn r1, #0
+	loadn r2, #' '
+
+apagaTelaInteira_loop:
+	outchar r2, r1
+	inc r1
+	cmp r1,r0
+	jne apagaTelaInteira_loop
+	
+	rts
+	
+
+atualizaScore :
+	push r0
+	push r1
+	push r2
+
+	loadn r0, #pos
+	loadn r1, #25
+	add r0,r0,r1
+	
+	loadi r1, r0 ; r1 = pos do char na linha da bandeja
+	load r2, pospessoa ;r2 = pos da pessoa 
+	dec r2
+	
+	;Faz tres comparações pois é o tamanho da bandeja(3 posiçoes)
+	cmp r1,r2 ; r1 == r2-1 ?
+	jeq AtualizaHit
+	inc r2
+	cmp r1,r2 ; r1 == r2
+	jeq AtualizaHit
+	inc r2
+	cmp r1,r2; r1 == r2 +1
+	jeq AtualizaHit
+
+	;se chegar aqui significa que é um miss, nao atualiza
+	jmp AtualizaMiss 
+AtualizaHit:
+	;outchar x se der hit??
+	loadn r1, #40
+	storei r0, r1 ; marca como invalido
+	
+	;call incScore
+	load r0, score
+	inc r0
+	store score, r0
+	loadn r1, #39
+	call imprimeNum
+	
+AtualizaMiss:
+	pop r2
+	pop r1
+	pop r0
+	rts
+
+
+verificaDerrota :
+	push r0
+	push r1
+	push r2
+
+	loadn r0, #pos
+	loadn r1, #29
+	add r0, r0, r1
+	
+	loadi r1, r0
+	loadn r2, #40
+	cmp r1,r2
+	jeq fimVerificaDerrota
+	
+	loadn r1, #1
+	store derrota, r1
+	
+fimVerificaDerrota:
+	pop r2
+	pop r1
+	pop r0
+	rts
+
+
+
+executa_comando:
+	push r0
+	push r1
+
+	load r0, tecla
+	
+	loadn r1, #'a'
+	cmp r0,r1
+	jne nao_executa_comando_1
+	
+	call move_esquerda
+	
+nao_executa_comando_1:
+	loadn r1, #'d'
+	cmp r0,r1
+	jne nao_executa_comando_2
+	
+	call move_direia
+	
+nao_executa_comando_2:
+	
+	pop r1
+	pop r0
+	rts
+
+
+
+wait_com_comando:
+	push r0
+	push r1
+	push r2
+	push r3
+	push r4
+	push r5
+	
+	load r5,estado
+	
+	loadn r0, #0
+
+	loadn r3, #255
+	
+	loadn r1, #100 ; na placa mudar para 10
+wait_com_comando1:
+	;loadn r2, #4000
+	load r2, velocidade
+	wait_com_comando2:
+		inchar r4
+
+		cmp r4,r3 ;inchar == 255
+		jne diff255
+			;call set_flagLidoTeclado0
+			loadn r5,#0
+			jmp wait_com_dps
+		diff255 :
+			;load r5, flagLidoTeclado
+			;loadn r5,#1
+			cmp r5,r0
+			jne wait_com_dps
 			
-			call AtPontos 			; Atualiza os pontos do jogador
+			store tecla, r4	
+			;call set_flagLidoTeclado1
+			loadn r5,#1
+			call executa_comando
+		wait_com_dps:
+		
+		dec r2
+		cmp r2,r0
+		jne wait_com_comando2
+	dec r1
+	cmp r1,r0
+	jne wait_com_comando1
+	
+	;VERIFICAR SE VALORES FAZEM SENTIDO AO PASSAR PRA PLACA
+	load r2, velocidade
+	loadn r1, #2010; velocidade maxima vai ser 1990
+	cmp r2,r1
+	jle fim_wait_com_comando
+	loadn r1, #10; step do aumento
+	sub r2,r2,r1
+	store velocidade,r2
+fim_wait_com_comando:
+	store estado,r5
+	pop r5
+	pop r4
+	pop r3
+	pop r2
+	pop r1
+	pop r0
+	rts
 
-			call ApagaPersonagem 	; Desenha o personagem na tela
-			nop
-			nop
-			nop
-			call PrintaPersonagem
-			nop
-			nop
-			nop
-			call AtPosicaoObstaculo ; Move o obstaculo
-			nop
-			nop
-			nop
-			
-			outchar r1, r2 			; Desenha o obstaculo
-			push r3
-			load r3, obstaculo_cactus_baixo
-			nop
-			nop
-			cmp r1, r3
-				ceq PrintaCactus
-			pop r3
-			
-			call DelayChecaPulo		; Atrasa a execucao e le uma tecla do teclado
-			nop
-			nop
-			nop
-			call AtPosicaoBoneco	; Atualiza a posicao do boneco de acordo com a situacao
-			
-			push r3 				; Checa se pode pular (personagem no chao)
-			loadn r3, #0 
-			cmp r5, r3
-				ceq ChecaPulo 		; Checa se o jogador pressionou tecla para o personagem pular
-			pop r3
-			
-		jmp LoopJogo 				; Volta para o inicio do loop
+
+
+
+
+
+
+
+
+move_direia:
+	push r0
+	push r1
+	
+	load r0, pospessoa
+	
+	loadn r1, #12
+	;if(r0 == 38) nao move direita
+	;else move
+	
+	cmp r0,r1
+	jeq nao_move_direita
+	
+	inc r0
+	call deleta_pessoa
+	store pospessoa, r0
+	call desenha_pessoa
+	
+	call atualizaScore ; permitir pegar a fruta enquanto anda pra cima dela
+	
+nao_move_direita:
+	pop r1
+	pop r0
+	rts
+
+move_esquerda:
+	push r0
+	push r1
+	
+	load r0, pospessoa
+	
+	loadn r1, #5
+	;if(r0 == 1) nao move esquerda
+	;else move
+	
+	cmp r0,r1
+	jeq nao_move_esquerda
+	
+	dec r0
+	call deleta_pessoa
+	store pospessoa, r0
+	call desenha_pessoa
+	
+	call atualizaScore ; permitir pegar a fruta enquanto anda pra cima dela
+	
+nao_move_esquerda:
+	pop r1
+	pop r0
+	rts
+
+; ___
+; |O|
+;  |
+; / \
+desenha_pessoa:
+	push r0
+	push r1
+	push r2
+	;loadn r0, #1 ; pos pra desenhar (de 1 a 38)
+	load r0, pospessoa
+	
+	loadn r1, #1000 ; pos da linha da bandeja
+	add r1, r1, r0
+	dec r1
+	
+	loadn r2, #'_'
+	outchar r2, r1 ; _
+	inc r1
+	nop
+	outchar r2, r1 ;  _
+	inc r1
+	nop
+	outchar r2, r1 ;   _
+	
+	loadn r1, #1040 ; pos da linha da Cabeça e braço
+	add r1, r1, r0
+	dec r1
+	
+	loadn r2, #'|'
+	outchar r2, r1 
+	loadn r2, #'O'
+	inc r1
+	outchar r2, r1 
+	loadn r2, #'|'
+	inc r1
+	outchar r2, r1 
+	
+	loadn r1, #1080 ; pos da linha do corpo
+	add r1, r1, r0
+	
+	loadn r2, #'|'
+	outchar r2, r1 
+	
+	loadn r1, #1120 ; pos da linha das pernas
+	add r1, r1, r0
+	
+	dec r1
+	loadn r2, #'/'
+	outchar r2, r1 
+	
+	loadn r2, #'\\'
+	inc r1
+	inc r1
+	outchar r2, r1 
+	
+	pop r2
+	pop r1
+	pop r0
+	rts
+	
+deleta_pessoa:
+	push r0
+	push r1
+	push r2
+	
+	load r0, pospessoa
+	
+	loadn r1, #1000 ; pos da linha da bandeja
+	add r1, r1, r0
+	dec r1
+	
+	loadn r2, #' '
+	outchar r2, r1 ; _
+	inc r1
+	nop
+	outchar r2, r1 ;  _
+	inc r1
+	nop
+	outchar r2, r1 ;   _
+	
+	loadn r1, #1040 ; pos da linha da Cabeça e braço
+	add r1, r1, r0
+	dec r1
+	
+	outchar r2, r1 
+	inc r1
+	nop
+	outchar r2, r1 
+	inc r1
+	nop
+	outchar r2, r1 
+	
+	loadn r1, #1080 ; pos da linha do corpo
+	add r1, r1, r0
+	
+	outchar r2, r1 
+	
+	loadn r1, #1120 ; pos da linha das pernas
+	add r1, r1, r0
+	
+	dec r1
+	outchar r2, r1 
+	
+	inc r1
+	inc r1
+	outchar r2, r1 
+	
+	pop r2
+	pop r1
+	pop r0
+	rts
+
+wait:
+	push r0
+	push r1
+	push r2
+	
+	loadn r0, #0
+	
+	loadn r1, #1000
+wait1:
+	loadn r2, #1000
+	wait2:
+		;wait3:
+		dec r2
+		cmp r2,r0
+		jne wait2
+	dec r1
+	cmp r1,r0
+	jne wait1
+	
+	
+	pop r2
+	pop r1
+	pop r0
+	rts
+
+atualizaTela:
+	push r0
+	push r1
+	push r2
+	push r3
+	push r4
+	push r5
+	push r6
+	push r7
+	
+	call apagaVetDaTela
+	call deleta_pessoa
+
+	call moveLetras
 
 	
-	GameOver:						; Funcao de game over
+	loadn r1, #1
+	load r6, cont
+	add r7,r6,r1
 	
-		call ApagaTela				; Imprime a tela do fim do jogo
-		loadn r1, #telaGameOverLinha0
-		loadn r2, #256
-		call ImprimeTela
-		
-		load r5, pontos
-		loadn r6, #865	
-		call PrintaNumero
-		call DigLetra
-		
-		loadn r0, #'n'
-		load r1, Letra
-		cmp r0, r1
-		jeq fim_de_jogo
-		
-		loadn r0, #'s' 				; Espera que a tecla 's' seja digitada para reiniciar o jogo
-		cmp r0, r1
-		jne GameOver
-		
-		call ApagaTela
+	loadn r1, #6 ;numero de linhas entre cada letra
+	mod r7, r7, r1
+	store cont, r7
 	
-		pop r2
-		pop r1
-		pop r0
-
-		pop r0
-		jmp setamento
-		
-		
-	PrintaCactus: 					; Imprime o obstaculo na tela
-		loadn r3, #40
-		sub r2, r2, r3
-		load r1, obstaculo_cactus_alto
-		nop
-		nop
-		nop
-		nop
-		nop
-		
-		outchar r1, r2
-		load r1, obstaculo_cactus_baixo
-		add r2, r2, r3
-		rts
-		
-		
-	fim_de_jogo:					; Sai do jogo
-		call ApagaTela
-		halt
-
-
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-; 			FUNCOES DE SUBROTINA
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Imprimestr:							; Rotina de impresao de mensagens
-
-	push r0							; Posicao da tela que o primeiro caractere da mensagem sera' impresso
-	push r1							; Endereco onde comeca a mensagem
-	push r2							; Cor da mensagem
 	
-	loadn r3, #'\0'					; Criterio de parada (\0)
+	mov r2, r6
+	
+	loadn r6, #pos
+	loadn r7, #char
+	
+	loadn r1, #40
+	loadn r0, #0
+	storei r6, r1
+	storei r7, r0
+	
+	cmp r2,r0 ; se cont != 0 nao escreve letra na tela
+	jne pula_escrita_atualizaTela
+	
+	call gera_rand
+	load r0, rand
+	
+	loadn r1, #26
+	mod r0,r0,r1 ; gera valor entre 0 e 25(cada um representa um caractere do alfabeto)
+	
+	loadn r1, #'a'
+	add r0,r1,r0 ;transforma de [0 à 25] para [a à z]
+
+	call gera_rand
+	load r1, rand
+	
+	loadn r2, #10 ; TAMANHO TA TELA QUE CAI AS LETRAS VAI SER 10
+	mod r1,r1,r2 ; r1 = r1 % 20
+	loadn r2, #4
+	add r1,r1,r2
+	
+	storei r6, r1
+	storei r7, r0
+	
+pula_escrita_atualizaTela:	
+	
+	call vetNaTela
+	call desenha_pessoa
+	
+	   
+	pop r7
+	pop r6
+	pop r5
+	pop r4
+	pop r3
+	pop r2
+	pop r1
+	pop r0
+	rts
+
+;--------------------------------------------------------------------------------------------------------
+
+apagaVetDaTela:
+	push r0
+	push r1
+	push r2
+	push r3
+	push r4
+	push r5
+	push r6
+	push r7
+	
+	loadn r6, #pos
+	loadn r7, #char
+	
+	loadn r0,#30
+	loadn r1,#0 ; i=0
+	
 
 
-ImprimestrLoop:						; Loop para impressao de mensagens
+loopApagaVetDaTela:
+	loadn r2, #40
+	mul r3, r1, r2 ;r3 = linha atual
+	loadi r4, r6 ;r4 = pos na linha
+	loadn r5, #' ' ; r5 = char da linha
+	
+	;if(r4 == 40)
+	cmp r4,r2
+	jeq naoPrintEspacoApaga
+	
+	add r4,r4,r3 ; r4 = pos na tela pra imprimir
+	outchar r5, r4
+	
+	loadn r2, #29 ; marcador da linha do '='
+	;if(r4 == 29) 
+	cmp r1,r2
+	jne naoPrintEspacoApaga
+	loadn r5, #'=';
+	outchar r5, r4
+	
+naoPrintEspacoApaga:
+	inc r6
+	inc r7
+	inc r1
+	cmp r1,r0
+	jne loopApagaVetDaTela
+
+	
+	pop r7
+	pop r6
+	pop r5
+	pop r4
+	pop r3
+	pop r2
+	pop r1
+	pop r0
+	rts
+
+;---------------------------------------------------------------------------------------------------------
+;Função que pega as informaçoes do vetor e printa na tela
+;Nao apaga o que estava antes, so escreve por cima(chamar função pra limpar tela antes)
+;
+vetNaTela:
+	push r0
+	push r1
+	push r2
+	push r3
+	push r4
+	push r5
+	push r6
+	push r7
+	
+	loadn r6, #pos
+	loadn r7, #char
+	
+	loadn r0,#30
+	loadn r1,#0 ; i=0
+	
+	loadn r2, #40 ; marcador do tam da linha
+loopVetNaTela:
+	mul r3, r1, r2 ;r3 = linha atual
+	loadi r4, r6 ; r4 = pos na linha
+	loadi r5, r7 ; r5 = char da linha
+	
+	;if(r4 == 40) goto naoPrintVetNaTela -- significa que nao foi inicializado ainda
+	cmp r4,r2
+	jeq naoPrintVetNaTela
+	
+	add r4,r4,r3 ; r4 = pos na tela pra imprimir
+	outchar r5, r4
+	
+naoPrintVetNaTela:
+
+	inc r6
+	inc r7	
+	inc r1
+	cmp r1,r0
+	jne loopVetNaTela
+	
+	
+	
+	pop r7
+	pop r6
+	pop r5
+	pop r4
+	pop r3
+	pop r2
+	pop r1
+	pop r0
+	rts
+	
+	
+;----------------------------------------------------------------------------------------------------------
+;r0 - end inicial do vet de tam 30
+;
+moveLetras:
+	push r0
+	push r1
+	push r2
+	push r3
+	push r4
+	push r5
+	push r6
+	push r7
+	
+	loadn r6, #pos
+	loadn r7, #char
+	
+	loadn r0,#28
+	loadn r1,#0 ; i=0
+		
+	add r6,r6, r0; r6[final]
+	add r7,r7, r0; r7[final]
+	
+	loadn r0,#29
+loopMoveLetras:
+	loadi r4, r6 ; r4 = pos na linha
+	loadi r5, r7 ; r5 = char da linha
+	
+	inc r6
+	inc r7
+	
+	storei r6, r4
+	storei r7, r5
+	
+	dec r6
+	dec r6
+	dec r7
+	dec r7
+	
+	
+	
+	inc r1
+	cmp r1,r0
+	jne loopMoveLetras
+	
+	
+	pop r7
+	pop r6
+	pop r5
+	pop r4
+	pop r3
+	pop r2
+	pop r1
+	pop r0
+	rts
+	
+	
+imprimeTelaIni:
+	push r0	; protege o r0 na pilha para preservar seu valor
+	push r1	; protege o r1 na pilha para preservar seu valor
+	push r2	; protege o r2 na pilha para preservar seu valor
+	push r3	; protege o r2 na pilha para preservar seu valor
+	push r4
+	push r5
+	
+	loadn r0, #1163	; Posicao na tela onde a mensagem sera' escrita
+	loadn r1, #linha	; Carrega r1 com o endereco do vetor que contem a mensagem
+	loadn r2, #0		; Seleciona a COR da Mensagem
+	call Imprimestr
+	
+	loadn r0, #25	; Posicao na tela onde a mensagem sera' escrita
+	loadn r1, #StrScore	; Carrega r1 com o endereco do vetor que contem a mensagem
+	loadn r2, #0		; Seleciona a COR da Mensagem
+	call Imprimestr
+	
+	loadn r0, #100	; Posicao na tela onde a mensagem sera' escrita
+	loadn r1, #StrVelocidade	; Carrega r1 com o endereco do vetor que contem a mensagem
+	loadn r2, #0		; Seleciona a COR da Mensagem
+	call Imprimestr
+	
+	load r0, score
+	loadn r1, #39
+	call imprimeNum
+	
+	loadn r5, #'|'
+	loadn r0, #29
+	loadn r1, #0
+	loadn r2, #40
+LoopImprimeTelaIni:
+	mul r3,r2,r1
+	loadn r4, #3
+	add r3, r3, r4
+	outchar r5, r3
+	loadn r4,#11
+	add r3,r4,r3
+	outchar r5, r3
+	
+	inc r1
+	cmp r1,r0
+	jne LoopImprimeTelaIni
+	
+	pop r5
+	pop r4
+	pop r3
+	pop r2
+	pop r1
+	pop r0
+	rts
+
+
+Imprimestr:	;  Rotina de Impresao de Mensagens:    r0 = Posicao da tela que o primeiro caractere da mensagem sera' impresso;  r1 = endereco onde comeca a mensagem; r2 = cor da mensagem.   Obs: a mensagem sera' impressa ate' encontrar "/0"
+	push r0	; protege o r0 na pilha para preservar seu valor
+	push r1	; protege o r1 na pilha para preservar seu valor
+	push r2	; protege o r1 na pilha para preservar seu valor
+	push r3	; protege o r3 na pilha para ser usado na subrotina
+	push r4	; protege o r4 na pilha para ser usado na subrotina
+	
+	loadn r3, #'\0'	; Criterio de parada
+
+ImprimestrLoop:	
 	loadi r4, r1
 	cmp r4, r3
 	jeq ImprimestrSai
 	add r4, r2, r4
-	nop
-	nop
-	nop
-	nop
-	nop
-	
 	outchar r4, r0
 	inc r0
 	inc r1
 	jmp ImprimestrLoop
-
-
-ImprimestrSai:						; Resgata os valores dos registradores utilizados na subrotina e sai da impressao
-	pop r4	; 
-	pop r3
-	pop r2
-	pop r1
-	pop r0
-	rts
-
-
-DigLetra:							; Espera que uma tecla seja digitada e salva na variavel global Letra
-	push r0
-	push r1
-	loadn r1, #255
-
-   DigLetra_Loop:
-		inchar r0					; Le o teclado, se nada for digitado = 255
-		cmp r0, r1					;compara r0 com 255
-		jeq DigLetra_Loop			; Fica lendo ate que o jogador digite uma tecla valida
-
-	store Letra, r0					; Salva a tecla na variavel global "Letra"
-
-	pop r1
-	pop r0
-	rts
-
-
-ApagaTela:							; Apaga as 1200 posicoes da tela
-	push r0
-	push r1
 	
-	loadn r0, #1200
-	loadn r1, #' '
-	
-	   ApagaTela_Loop:
-		dec r0
-		nop
-		nop
-		nop
-		
-		outchar r1, r0
-		jnz ApagaTela_Loop
- 
-	pop r1
-	pop r0
-	rts	
-
-
-ImprimeTela: 						;  Rotina de impresao do cenario na tela
-
-	;  r1 = endereco onde comeca a primeira linha do Cenario
-	;  r2 = cor do Cenario para ser impresso
-	
-	push r0
-	push r1
-	push r2
-	push r3
-	push r4
-	push r5
-
-	loadn r0, #0  					; Posicao inicial
-	loadn r3, #40  					; Incremento da posicao da tela
-	loadn r4, #41  					; Incremento do ponteiro das linhas da tela
-	loadn r5, #1200 				; Limite da tela
-	
-   ImprimeTela_Loop:
-		call ImprimeStr
-		add r0, r0, r3  			; Incrementa posicao para a segunda linha na tela
-		add r1, r1, r4  			; Incrementa o ponteiro para o comeco da proxima linha na memoria
-		cmp r0, r5					; Compara r0 com 1200
-		jne ImprimeTela_Loop		; Enquanto r0 < 1200
-
-	pop r5							; Resgata os valores dos registradores
-	pop r4
+ImprimestrSai:	
+	pop r4	; Resgata os valores dos registradores utilizados na Subrotina da Pilha
 	pop r3
 	pop r2
 	pop r1
 	pop r0
 	rts
 	
+;--------------------------------------------------------------------------------------------------------
+;nao trata tamanho <=0, da ruim -- NAO PASSAR COM TAM <=0 SEUS LOUCOS, NEM FAZ SENTIDO
+;r0 - end do vetor  --- r1 - tam do vetor -- r2 - valor a ser setado
+setVetor:
+	loadn r3, #0
+	storei r0, r2
+	inc r0
+	dec r1
+	cmp r1,r3
+	jne setVetor 
+	rts
 
-ImprimetelaGameOver: 						;  Rotina de Impresao de Cenario na Tela Inteira
 
-	; r1 = endereco onde comeca a primeira linha do Cenario
-	; r2 = cor do Cenario para ser impresso
-
+;IMPRIMENUMERO
+;param r0 - num
+;param r1 - pos na tela inicial(vai escrever da direita para a esquerda)
+imprimeNum:
 	push r0
 	push r1
-	push r2
 	push r3
 	push r4
 	push r5
-	push r6
-
-	loadn R0, #0  					; Posicao inicial
-	loadn R3, #40  					; Incremento da posicao da tela
-	loadn R4, #41  					; Incremento do ponteiro das linhas da tela
-	loadn R5, #1200 				; Limite da tela
-	loadn R6, #telaInicioLinha0			; Endereco da primeira linha do cenario
+	;FAZER PUSHS
 	
-   ImprimetelaGameOver_Loop:
-		call ImprimeStr2
-		add r0, r0, r3  			; Incrementa posicao para a segunda linha na tela
-		add r1, r1, r4  			; Incrementa o ponteiro para o comeco da proxima linha na memoria
-		add r6, r6, r4  			; Incrementa o ponteiro para o comeco da proxima linha na memoria
-		cmp r0, r5					; Compara r0 com 1200
-		jne ImprimetelaGameOver_Loop		; Enquanto r0 < 1200
-		
-	pop r6	; Resgata os valores dos registradores
+	loadn r5,#'0'
+	
+loopImprimeNum:
+	loadn r4,#10
+	
+	mod r3,r0,r4; r3 = num % 10
+	add r3,r3,r5; r3 = r3 + '0';
+	
+	outchar r3, r1
+	
+	dec r1
+	div r0,r0,r4
+	
+	loadn r4,#0
+	cmp r0,r4
+	jne loopImprimeNum
+	
+	;FAZER POPS
 	pop r5
 	pop r4
 	pop r3
-	pop r2
 	pop r1
 	pop r0
 	rts
+	
+	
+	
+;Função para testar rodar os numeros rand
+teste_rand:
+	loadn r4, #30
+	loadn r5, #40
+	loadn r6, #4
+	
+	loadn r2, #4 ; i=3
+loopTestRandOut:
+
+	loadn r3, #0 ; j=0
+	loopTestRandIn:
+		load r0, rand
+		call gera_rand
+		mul r1,r3,r5
+		add r1,r1,r2
+		call imprimeNum
+		inc r3 ;j++
+		cmp r3,r4
+		jne loopTestRandIn
 		
-
-ImprimeStr2:						; Rotina de Impresao de Mensagens: (ate encontrar '/0')
-
-	push r0							; Posicao da tela que o primeiro caractere da mensagem sera' impresso
-	push r1							; Endereco onde comeca a mensagem
-	push r2							; Cor da mensagem
-	push r3
-	push r4
-	push r5
-	push r6	
+	add r2,r2,r6 ;i += 3
+	cmp r2, r5
+	jle loopTestRandOut ;if(i<40)
 	
-	loadn r3, #'\0'					; Criterio de parada
-	loadn r5, #' '					; Espaco em Branco
-
-   ImprimeStr2_Loop:	
-		loadi r4, r1
-		cmp r4, r3					; If (Char == \0) sai da rotina
-		jeq ImprimeStr2_Sai
-		cmp r4, r5					; If (Char == ' ') pula  do espaco para nao apagar outros caracteres
-		jeq ImprimeStr2_Skip
-		add r4, r2, r4				; Soma a Cor
-		nop
-		nop
-		nop
-		nop
-		nop
-		
-		outchar r4, r0				; Imprime o caractere na tela
-   		storei r6, r4
-   ImprimeStr2_Skip:
-		inc r0						; Incrementa a posicao na tela
-		inc r1						; Incrementa o ponteiro da String
-		inc r6
-		jmp ImprimeStr2_Loop
-	
-   ImprimeStr2_Sai:	
-	pop r6							; Resgata os valores dos registradores
-	pop r5
-	pop r4
-	pop r3
-	pop r2
-	pop r1
-	pop r0
-	rts
-
-	
-ImprimeStr:							; Rotina de Impresao de Mensagens: (ate encontrar '/0')
-	push r0							; Posicao da tela que o primeiro caractere da mensagem sera' impresso
-	push r1							; Endereco onde comeca a mensagem
-	push r2							; Cor da mensagem
-	push r3
-	push r4
-	
-	loadn r3, #'\0'					; Criterio de parada
-
-   ImprimeStr_Loop:	
-		loadi r4, r1
-		cmp r4, r3					; If (Char == \0) sai da rotina
-		jeq ImprimeStr_Sai
-		add r4, r2, r4				; Soma a Cor
-		nop
-		nop
-		nop
-		nop
-		nop
-		
-		outchar r4, r0				; Imprime o caractere na tela
-		inc r0						; Incrementa a posicao na tela
-		inc r1						; Incrementa o ponteiro da String
-		jmp ImprimeStr_Loop
-	
-   ImprimeStr_Sai:	
-	pop r4							; Resgata os valores dos registradores
-	pop r3
-	pop r2
-	pop r1
-	pop r0
-	rts
-
-
-AtPosicaoBoneco:					; Funcao que atualiza a posicao do boneco na tela
-
-	push r0
-	
-	;if r5 = 1						; Caso o ciclo do pulo esteja em 1, 2, 3 ou 4, o boneco sobe
-	loadn r0, #1
-	cmp r5, r0
-		ceq Sobe
-
-	;if r5 = 2
-	loadn r0, #2
-	cmp r5, r0
-		ceq Sobe
-		
-	;if r5 = 3
-	loadn r0, #3
-	cmp r5, r0
-		ceq Sobe
-		
-	;if r5 = 4
-	loadn r0, #4
-	cmp r5, r0
-		ceq Sobe
-	
-	;if r5 = 5						; Caso o ciclo do pulo esteja em 5, 6, 7 ou 8, o boneco desce
-	loadn r0, #5
-	cmp r5, r0
-		ceq Desce
-		
-	;if r5 = 6
-	loadn r0, #6
-	cmp r5, r0
-		ceq Desce
-		
-	;if r5 = 7
-	loadn r0, #7
-	cmp r5, r0
-		ceq Desce
-		
-	;if r5 = 8
-	loadn r0, #8
-	cmp r5, r0
-		ceq Desce
-		
-	;if r5 != 0
-	loadn r0, #0					; Caso o boneco estaja no chao (ciclo = 0), nao se altera o ciclo
-	cmp r5, r0
-		cne IncrementaCiclo			; Caso nao esteja no chao, o ciclo deve continuar sendo incrementado
-		
-	loadn r0, #9					; Ate que o ciclo chegue em 9, entao se torna 0 novamente (boneco esta no chao novamente)
-	cmp r5, r0
-		ceq ResetaCiclo
-				
-		
-	pop r0
-	rts
-
-
-AtPosicaoObstaculo:					; Funcao que atualiza a posicao do obstaculo na tela de acordo com a necessidade da situacao
-	
-	push r0
-	push r3
-	push r4
-	loadn r4, #40
-	sub r3, r2, r4
-	loadn r0 , #' '
-	nop
-	nop
-	nop
-	nop
-	
-	outchar r0, r2
-	nop
-	nop
-	nop
-	nop
-	
-	outchar r0, r3
-	
-	dec r2
-
-	;if posicao do obstaculo = 480 (fim da tela para a esquerda)
-		
-	loadn r0, #480
-	cmp r2, r0
-		ceq ResetaObstaculo
-		
-	loadn r0, #360
-	cmp r2, r0
-		ceq ResetaObstaculo
-		
-	pop r0
-	pop r3
-	pop r4
-	rts
-
-
-ResetaObstaculo:			; Funcao que reseta a posicao do obstaculo
-	push r0
-	push r4
-	push r3
-	
-	loadn r2, #519		; Posicao (padrao do obstaculo)
-	
-	call GeraPosicao	; Gera a nova  posicao para o obstaculo
-	
-	loadn r4, #1		;  Caso 1
-	cmp r3,r4
-	ceq AlteraPos1
-	
-	loadn r4, #2		; Caso 2
-	cmp r3,r4
-	ceq AlteraPos2
-	
-	pop r3
-	pop r4
-	pop r0
-	rts
-
-
-GeraPosicao :			; Funcao que gera uma posicao aleatoria para o obstaculo
-	push r0
-	push r4
-						; sorteia nr. randomico entre 0 - 7
-	loadn r0, #Rand 	; declara ponteiro para tabela rand na memoria!
-	load r4, IncRand	; Pega Incremento da tabela Rand
-	add r0, r0, r4		; Soma Incremento ao inicio da tabela Rand
-						; R2 = Rand + IncRand
-	loadi r3, r0 		; busca nr. randomico da memoria em R3
-						; R3 = Rand(IncRand)
-						
-	inc r4				; Incremento ++
-	loadn r0, #30
-	cmp r4, r0			; Compara com o Final da Tabela e re-estarta em 0
-	jne ResetaVetor
-		loadn r4, #0		; re-estarta a Tabela Rand em 0
-  ResetaVetor:
-	store IncRand, r4	; Salva incremento ++
-	
-	
-	pop r4
-	pop r0
-	rts
-
-
-ResetaAleatorio:	; Funcao que reseta a semente para a funcao de geracao aleatoria
-		
-		push r2
-		loadn r2,#28
-		
-		sub r1,r2,r2 
-		
-		pop r2
-		rts
-
-
-AlteraPos1:		; Caso 1 da posicao do obstaculo
-		push r4
-		
-		loadn r4,#0
-		sub r2,r2,r4
-		load r1, obstaculo_cactus_baixo
-
-		pop r4
-		rts
-
-
-AlteraPos2:	; Caso 2 da posicao do obstaculo
-		push r4
-		
-		loadn r4,#80
-		sub r2,r2,r4	
-		
-		load r1, obstaculo_passaro_baixo
-		pop r4
-		rts
-
-
-ChecaPulo:	; Funcao que checa se o jogador pressionou 'space' e, se sim, inicia o ciclo do pulo
-
-	push r3
-	load r3, Letra 			; Caso ' space' tenha sido pressionado	
-	cmp r7, r3
-		loadn r3, #255
-		store Letra, r3
-		ceq IncrementaCiclo		; Inicia o ciclo do pulo
-	pop r3 		
-	rts
-
-
-IncrementaCiclo:		; Incrementa o ciclo do pulo
-
-	inc r5
-	rts
-
-
-ResetaCiclo:		; Reseta o ciclo do pulo
-
-	loadn r5, #0
-	rts
-
-
-Sobe:	; Funcao que sobe o personagem para a linha de cima (-40 em sua posicao)
-
-	push r1
-	push r2
-	
-	call ApagaPersonagem
-	
-	loadn r1, #80
-	sub r6, r6, r1
-	
-	pop r2
-	pop r1
-	rts 
-
-	
-Desce:	; Funcao que desce o personagem para a linha de cima (+40 em sua posicao)
-
-	push r1
-	push r2
-	
-	call ApagaPersonagem
-	
-	loadn r1, #80
-	add r6, r6, r1
-	
-	pop r2
-	pop r1
-	rts
-
-
-IncPontos:	; Funcao que  incrementa os pontos do jogador
-
-	push r1
-	push r2
-	push r3
-	
-	load r2, pontos
-	
-	inc r2
-	
-	load r1, delay1
-	
-	loadn r3, #2		;guarda 23 em r3
-	
-	;add r3, r3, r2		;multiplica r3 por r2
-	sub r1, r1, r3		;subtrai r1 por r3
-	store delay1, r1	;guarda novo delay
-	
-	;store delay2, r1
-	
-	store pontos, r2
-	
-	pop r3
-	pop r2
-	pop r1
-	rts
-
-
-AtPontos:	; Funcao que atualiza os pontos do jogador
-
-	push r1
-	push r5
-	push r6
-	
-	loadn r1, #490		; Caso o obstaculo tenha passado pela posicao do jogador, incrementa a pontuacao
-	cmp r2, r1
-		ceq IncPontos
-		
-	loadn r1, #410		; Idem, porem para o caso do obstaculo estar em  outra linha
-	cmp r2, r1
-		ceq IncPontos
-	
-	loadn r1, #370		; Idem, porem para o caso do obstaculo estar em  outra linha
-	cmp r2, r1
-		ceq IncPontos
-		
-		
-	load r5, pontos
-	
-	loadn r6, #38
-	
-	call PrintaNumero	; Imprime a pontuacao na tela
-	
-	pop r6
-	pop r5
-	pop r1
-	rts	
-	
-
-DelayChecaPulo:  		; Funcao que da' o delay de um ciclo do jogo e tambem le uma tecla do teclado
-	push r0
-	push r1
-	push r2
-	push r3
-	
-	load r0, delay1
-	loadn r3, #255
-	store Letra, r3		; Guarda 255 na Letra pro caso de nao apertar nenhuma tecla
-	
-	loop_delay_1:
-		load r1, delay2
-
-; Bloco de ler o Teclado no meio do DelayChecaPulo!!		
-			loop_delay_2:
-				inchar r2
-				cmp r2, r3 
-				jeq loop_skip
-				store Letra, r2		; Se apertar uma tecla, guarda na variavel Letra
-			
-	loop_skip:			
-		dec r1
-		jnz loop_delay_2
-		dec r0
-		jnz loop_delay_1
-		jmp sai_dalay
-	
-	sai_dalay:
-		pop r3
-		pop r2
-		pop r1
-		pop r0
-	rts
-
-
-PrintaNumero:	; Imprime um numero de 2 digitos na tela; R5 contem um numero de ate' 2 digitos e R6 a posicao onde vai imprimir na tela
-
-	push r0
-	push r1
-	push r2
-	push r3
-	
-	loadn r0, #10
-	loadn r2, #48
-	
-	div r1, r5, r0	; Divide o numero por 10 para imprimir a dezena
-	
-	add r3, r1, r2	; Soma 48 ao numero pra dar o Cod.  ASCII do numero
-	nop
-	nop
-	nop
-	nop
-	nop
-	
-	outchar r3, r6
-	
-	inc r6			; Incrementa a posicao na tela
-	
-	mul r1, r1, r0	; Multiplica a dezena por 10
-	sub r1, r5, r1	; Pra subtrair do numero e pegar o resto
-	
-	add r1, r1, r2	; Soma 48 ao numero pra dar o Cod.  ASCII do numero
-	nop
-	nop
-	nop
-	nop
-	nop
-	
-	outchar r1, r6
-	
-	pop r3
-	pop r2
-	pop r1
-	pop r0
 
 	rts
-
-
-PrintaPersonagem:	; Desenha o personagem na tela
-	push r0
-	
-	nop
-	nop
-	nop
-	
-	outchar r4, r6
-	loadn r4, #'#'
-	loadn r0, #40
-	inc r6
-	nop
-	nop
-	nop
-	
-	outchar r4, r6 
-	loadn r4, #'$'
-	inc r6
-	nop
-	nop
-	nop
-	nop
-	
-	outchar r4, r6 
-	sub r6, r6, r0
-	loadn r4, #'%'
-	nop
-	nop
-	nop
-	
-	outchar r4, r6 
-	loadn r4, #'&'
-	dec r6
-	nop
-	nop
-	nop
-
-	outchar r4, r6 
-	loadn r4, #'''
-	dec r6
-	nop
-	nop
-	nop
-	nop
-	
-	outchar r4, r6 
-	sub r6, r6, r0
-	loadn r4, #'('
-	nop
-	nop
-	nop
-	nop
-	
-	outchar r4, r6 
-	loadn r4, #')'
-	inc r6
-	nop
-	nop
-	nop
-	nop
-	
-	outchar r4, r6 
-	loadn r4, #'*'
-	inc r6
-	nop
-	nop
-	nop
-	nop
-	
-	outchar r4, r6 
-	add r6, r6, r0
-	add r6, r6, r0
-	dec r6
-	dec r6
-	loadn r4, #'+'
-	pop r0			
-	rts
-
-
-ApagaPersonagem:	; Apaga o personagem da tela
-	
-	push r4
-	push r0
-	push r6
-
-	loadn r4, #' '	; Printa um espaco no lugar do personagem, apagando-o
-	nop
-	nop
-	nop
-	nop
-	
-	outchar r4, r6 	
-	
-	inc r6
-	nop
-	nop
-	nop
-	nop
-
-	outchar r4, r6 
-	
-	inc r6
-	nop
-	nop
-	nop
-	nop
-	
-	outchar r4, r6 
-	
-	loadn r0, #40
-	sub r6, r6, r0
-	nop
-	nop
-	nop
-	nop
-	
-	outchar r4, r6
-	
-	dec r6
-	nop
-	nop
-	nop
-	nop
-	
-	outchar r4, r6
-	
-	dec r6
-	
-	nop
-	nop
-	nop
-	nop
-	
-	outchar r4, r6
-	
-	sub r6, r6, r0
-	nop
-	nop
-	nop
-	
-	outchar r4, r6
-	
-	inc r6
-	nop
-	nop
-	nop
-	
-	outchar r4, r6
-	
-	inc r6
-	nop
-	nop
-	nop
-	
-	outchar r4, r6
-	
-	add r6, r6, r0
-	add r6, r6, r0
-	dec r6
-	dec r6
-	
-	pop r6
-	pop r0
-	pop r4
-	rts
-
-
-ChecaColisao:	; Funcao que checa colisao do personagem com os obstaculos
-	push r0
-	push r6
-	push r2
-	;;compara posicao inferior do personagem com a do obstaculo, se igual finaliza o jogo
-	inc r6
-	
-	cmp r2, r6   ;checa pe
-	jeq GameOver
-
-	loadn r0,#40
-	sub r2,r2,r0
-	cmp r2, r6
-	jeq GameOver
-	add r2, r2, r0
-	
-	loadn r0,#40
-	sub r6,r6,r0
-	inc r6
-	cmp r2, r6	;checa meio
-	jeq GameOver
-	
-	loadn r0,#40
-	sub r2,r2,r0
-	cmp r2, r6
-	jeq GameOver
-	add r2, r2, r0
-	
-	loadn r0,#40
-	sub r6,r6,r0
-	cmp r2, r6	;checa cabeca
-	jeq GameOver
-	
-	add r6,r6,r0
-	add r2, r2, r0
-	
-	pop r2
-	pop r6
-	pop r0
-	
-	rts
-
-													   
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-; 			TELA DE INICIO
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-telaInicioLinha0  : string "                                        "
-telaInicioLinha1  : string "                                        "
-telaInicioLinha2  : string "                                        "
-telaInicioLinha3  : string "                                        "
-telaInicioLinha4  : string "                                        "
-telaInicioLinha5  : string "       ____                             "
-telaInicioLinha6  : string "      |  _ \\ _____  __                  "
-telaInicioLinha7  : string "      | |_) / _ \\ \\/ /                  "
-telaInicioLinha8  : string "      |  _ <  __/>  <                   "
-telaInicioLinha9  : string "      |_|_\\_\\___/_/\\_\\                  "                    
-telaInicioLinha10 : string "      / ___|  ___ __ _ _ __   ___       "                  
-telaInicioLinha11 : string "      \\___ \\ / __/ _` | '_ \\ / _ \\      "                  
-telaInicioLinha12 : string "       ___) | (_| (_| | |_) |  __/      "
-telaInicioLinha13 : string "      |____/ \\___\\__,_| .__/ \\___|      "                   
-telaInicioLinha14 : string "                      |_|               "                  
-telaInicioLinha15 : string "                                        "
-telaInicioLinha16 : string "                                        "
-telaInicioLinha17 : string "                                        "
-telaInicioLinha18 : string "                                        "
-telaInicioLinha19 : string "     PRESSIONE ESPACO PARA INICIAR      "
-telaInicioLinha20 : string "                                        "
-telaInicioLinha21 : string "                                        "
-telaInicioLinha22 : string "                                        "
-telaInicioLinha23 : string "                                        "
-telaInicioLinha24 : string "                                        "
-telaInicioLinha25 : string "                                        "
-telaInicioLinha26 : string "                                        "
-telaInicioLinha27 : string "                                        "
-telaInicioLinha28 : string "                                        "
-telaInicioLinha29 : string "                                        "
-
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-; 			TELA PADRAO
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-telaPadraoLinha0  : string "                                        "
-telaPadraoLinha1  : string "                                        "
-telaPadraoLinha2  : string "                                        "
-telaPadraoLinha3  : string "                                        "
-telaPadraoLinha4  : string "                                        "
-telaPadraoLinha5  : string "                                        "
-telaPadraoLinha6  : string "                                        "
-telaPadraoLinha7  : string "                                        "
-telaPadraoLinha8  : string "                                        "
-telaPadraoLinha9  : string "                                        "
-telaPadraoLinha10 : string "                                        "
-telaPadraoLinha11 : string "                                        "
-telaPadraoLinha12 : string "                                        "
-telaPadraoLinha13 : string "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"
-telaPadraoLinha14 : string "                                        "
-telaPadraoLinha15 : string "                                        "
-telaPadraoLinha16 : string "                                        "
-telaPadraoLinha17 : string "                                        "
-telaPadraoLinha18 : string "                                        "
-telaPadraoLinha19 : string "                                        "
-telaPadraoLinha20 : string "                                        "
-telaPadraoLinha21 : string "                                        "
-telaPadraoLinha22 : string "                                        "
-telaPadraoLinha23 : string "                                        "
-telaPadraoLinha24 : string "                                        "
-telaPadraoLinha25 : string "                                        "
-telaPadraoLinha26 : string "                                        "
-telaPadraoLinha27 : string "                                        "
-telaPadraoLinha28 : string "                                        "
-telaPadraoLinha29 : string "                                        "
-
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-; 			TELA GAME OVER
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-telaGameOverLinha0  : string "                                        "
-telaGameOverLinha1  : string "                                        "
-telaGameOverLinha2  : string "                                        "
-telaGameOverLinha3  : string "                                        "
-telaGameOverLinha4  : string "                                        "
-telaGameOverLinha5  : string "                                        "
-telaGameOverLinha6  : string "                                        "
-telaGameOverLinha7  : string "                                        "
-telaGameOverLinha8  : string "                                        "
-telaGameOverLinha9  : string "                                        "
-telaGameOverLinha10 : string "                                        "
-telaGameOverLinha11 : string "                                        "
-telaGameOverLinha12 : string "                                        "
-telaGameOverLinha13 : string "                                        "
-telaGameOverLinha14 : string "                                        "
-telaGameOverLinha15 : string "              PERDEU!!!                 "
-telaGameOverLinha16 : string "                                        "
-telaGameOverLinha17 : string "                                        "
-telaGameOverLinha18 : string "                                        "
-telaGameOverLinha19 : string " S PARA JOGAR NOVAMENTE/N PARA ENCERRAR "                                   
-telaGameOverLinha20 : string "                                        "
-telaGameOverLinha21 : string "               PONTOS:                  "
-telaGameOverLinha22 : string "       					              "
-telaGameOverLinha23 : string "                                        "
-telaGameOverLinha24 : string "                                        "
-telaGameOverLinha25 : string "                                        "
-telaGameOverLinha26 : string "                                        "
-telaGameOverLinha27 : string "                                        "
-telaGameOverLinha28 : string "                                        "
-telaGameOverLinha29 : string "                                        "
-
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-; 			TELA CHAO (GRAMA)
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-telaChaoLinha0  : string "                                        "
-telaChaoLinha1  : string "                                        "
-telaChaoLinha2  : string "                                        "
-telaChaoLinha3  : string "                                        "
-telaChaoLinha4  : string "                                        "
-telaChaoLinha5  : string "                                        "
-telaChaoLinha6  : string "                                        "
-telaChaoLinha7  : string "                                        "
-telaChaoLinha8  : string "                                        "
-telaChaoLinha9  : string "                                        "
-telaChaoLinha10 : string "                                        "
-telaChaoLinha11 : string "                                        "
-telaChaoLinha12 : string "                                        "
-telaChaoLinha13 : string "                                        "
-telaChaoLinha14 : string "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"
-telaChaoLinha15 : string "^^ ^^ ^^ ^^ ^^ ^^ ^^ ^^ ^^ ^^ ^^ ^^ ^^ ^"
-telaChaoLinha16 : string " ^^^^ ^^^^ ^^^^ ^^^^ ^^^^ ^^^^ ^^^^ ^^^^"
-telaChaoLinha17 : string "^^ ^^ ^^ ^^ ^^ ^^ ^^ ^^ ^^ ^^ ^^ ^^ ^^ ^"
-telaChaoLinha18 : string " ^^^^ ^^^^ ^^^^ ^^^^ ^^^^ ^^^^ ^^^^ ^^^^"
-telaChaoLinha19 : string "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"
-telaChaoLinha20 : string "                                        "
-telaChaoLinha21 : string "                                        "
-telaChaoLinha22 : string "                                        "
-telaChaoLinha23 : string "                                        "
-telaChaoLinha24 : string "                                        "
-telaChaoLinha25 : string "                                        "
-telaChaoLinha26 : string "                                        "
-telaChaoLinha27 : string "                                        "
-telaChaoLinha28 : string "                                        "
-telaChaoLinha29 : string "                                        "
-
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-; 			TELA BARRAS HORIZONTAIS
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-telaBarrasLinha0  : string "                                        "
-telaBarrasLinha1  : string "                                        "
-telaBarrasLinha2  : string "                                        "
-telaBarrasLinha3  : string "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
-telaBarrasLinha4  : string "                                        "
-telaBarrasLinha5  : string "                                        "
-telaBarrasLinha6  : string "                                        "
-telaBarrasLinha7  : string "                                        "
-telaBarrasLinha8  : string "                                        "
-telaBarrasLinha9  : string "                                        "                   
-telaBarrasLinha10 : string "                                        "               
-telaBarrasLinha11 : string "                                        "               
-telaBarrasLinha12 : string "                                        "            
-telaBarrasLinha13 : string "                                        "                   
-telaBarrasLinha14 : string "                                        "                  
-telaBarrasLinha15 : string "                                        "
-telaBarrasLinha16 : string "                                        "
-telaBarrasLinha17 : string "                                        "
-telaBarrasLinha18 : string "                                        "
-telaBarrasLinha19 : string "                                  		"
-telaBarrasLinha20 : string "                                        "
-telaBarrasLinha21 : string "                                        "
-telaBarrasLinha22 : string "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
-telaBarrasLinha23 : string "                                        "
-telaBarrasLinha24 : string "                                        "
-telaBarrasLinha25 : string "                                        "
-telaBarrasLinha26 : string "                                        "
-telaBarrasLinha27 : string "                                        "
-telaBarrasLinha28 : string "                                        "
-telaBarrasLinha29 : string "                                        "
