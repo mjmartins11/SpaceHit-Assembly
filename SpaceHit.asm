@@ -45,7 +45,7 @@ score:	var #1
 estado:	var #1
 derrota:	var #1 
 velocidade:	var #1
-pospessoa:	var #1
+posnave:	var #1
 
 ; Funcao que inicializa as variaveis do jogo
 inicializa_variaveis_do_jogo:
@@ -63,14 +63,14 @@ inicializa_variaveis_do_jogo:
 	loadn r2, #0
 	call setVetor ; VERIFICAR:::: SET CHAR POS PARA {0,0,0,..,0}
 	
-	loadn r0 , #0 
+	loadn r0, #0 
 	store score, r0
 	store derrota, r0
 	store cont, r0
 	store estado, r0
 	
-	loadn r0, #5	; posicao pessoa
-	store pospessoa, r0
+	loadn r0, #5	; posicao da nave
+	store posnave, r0
 	
 	loadn r0, #255
 	store tecla, r0
@@ -211,11 +211,11 @@ apagaTelaInteira:
 	loadn r1, #0
 	loadn r2, #' '
 
-apagaTelaInteira_loop:
+loop_apagaTelaInteira:
 	outchar r2, r1
 	inc r1
 	cmp r1, r0
-	jne apagaTelaInteira_loop
+	jne loop_apagaTelaInteira
 	
 	rts
 	
@@ -229,7 +229,7 @@ atualizaScore:
 	add r0, r0, r1
 	
 	loadi r1, r0 		; r1 = pos do char na linha da bandeja
-	load r2, pospessoa  ; r2 = pos da pessoa 
+	load r2, posnave  ; r2 = pos da pessoa 
 	dec r2
 	
 	; Faz tres comparações pois é o tamanho da bandeja(3 posiçoes)
@@ -305,7 +305,7 @@ nao_executa_comando_1:
 	cmp r0, r1
 	jne nao_executa_comando_2
 	
-	call move_direia
+	call move_direita
 	
 nao_executa_comando_2:
 	pop r1
@@ -320,7 +320,7 @@ wait_com_comando:
 	push r4
 	push r5
 	
-	load r5,estado
+	load r5, estado
 	
 	loadn r0, #0
 
@@ -376,11 +376,11 @@ fim_wait_com_comando:
 	pop r0
 	rts
 
-move_direia:
+move_direita:
 	push r0
 	push r1
 	
-	load r0, pospessoa
+	load r0, posnave
 	
 	loadn r1, #34
 	; if(r0 == 38) nao move direita
@@ -391,7 +391,7 @@ move_direia:
 	
 	inc r0
 	call deleta_nave
-	store pospessoa, r0
+	store posnave, r0
 	call desenha_nave
 	
 	call atualizaScore	; permitir pegar a fruta enquanto anda pra cima dela
@@ -405,18 +405,19 @@ move_esquerda:
 	push r0
 	push r1
 	
-	load r0, pospessoa
+	load r0, posnave
 	
 	loadn r1, #5
-	;if(r0 == 1) nao move esquerda
-	;else move
 	
-	cmp r0,r1
+	; if(r0 == 1) nao move esquerda
+	; else move
+	
+	cmp r0, r1
 	jeq nao_move_esquerda
 	
 	dec r0
 	call deleta_nave
-	store pospessoa, r0
+	store posnave, r0
 	call desenha_nave
 	
 	call atualizaScore	; permitir pegar a fruta enquanto anda pra cima dela
@@ -434,7 +435,7 @@ desenha_nave:
 	push r0
 	push r1
 	push r2
-	load r0, pospessoa
+	load r0, posnave
 	
 ; ----- posicao da primeira linha da nave( /\ )
 	loadn r1, #1003
@@ -467,7 +468,6 @@ desenha_nave:
 	loadn r2, #'_'
 	inc r1
 	outchar r2, r1
-	
 	
 ; ----- posicao da terceira linha da nave ( |_|..|_| )
 	loadn r1, #1080
@@ -529,7 +529,7 @@ deleta_nave:
 	push r1
 	push r2
 	
-	load r0, pospessoa
+	load r0, posnave
 	
 ; ------ posoicao da primeira linha da nave
 	loadn r1, #1003 
@@ -623,19 +623,19 @@ wait:
 	push r2
 	
 	loadn r0, #0
-	
 	loadn r1, #1000
 	
 wait1:
 	loadn r2, #1000
+	
 	wait2:
 		dec r2
 		cmp r2, r0
 		jne wait2
+	
 	dec r1
 	cmp r1,r0
 	jne wait1
-	
 	
 	pop r2
 	pop r1
@@ -654,14 +654,13 @@ atualizaTela:
 	
 	call apagaVetDaTela
 	call deleta_nave
-
 	call moveLetras
 	
 	loadn r1, #1
 	load r6, cont
 	add r7, r6, r1
 	
-	loadn r1, #8    ; numero de linhas entre cada letra
+	loadn r1, #8	; numero de linhas entre cada letra
 	mod r7, r7, r1
 	store cont, r7
 	
@@ -675,17 +674,17 @@ atualizaTela:
 	storei r6, r1
 	storei r7, r0
 	
-	cmp r2,r0 ; se cont != 0 nao escreve letra na tela
+	cmp r2,r0	; se cont != 0 nao escreve letra na tela
 	jne pula_escrita_atualizaTela
 	
 	call gera_rand
 	load r0, rand
 	
 	loadn r1, #26
-	mod r0, r0, r1 ; gera valor entre 0 e 25(cada um representa um caractere do alfabeto)
+	mod r0, r0, r1	; gera valor entre 0 e 25(cada um representa um caractere do alfabeto)
 	
 	loadn r1, #'a'
-	add r0, r1, r0 ; transforma de [0 à 25] para [a à z]
+	add r0, r1, r0 	; transforma de [0 à 25] para [a à z]
 
 	call gera_rand
 	load r1, rand
