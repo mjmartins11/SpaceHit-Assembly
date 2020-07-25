@@ -1,3 +1,10 @@
+; Laboratório de Organização e Arquitetura de Computadores
+; Jogo: Space Hit
+; 
+; Isadora Carolina Siebert   NUSP: 11345580
+; Marlon
+
+
 ; Hello World - Escreve mensagem armazenada na memoria na tela
 
 
@@ -25,30 +32,25 @@ jmp main
 
 pos : var #30
 char : var #30
-linha : string "============"
+linha : string "=================================="
 StrScore : string "Score:"
-StrVelocidade : string "Velocidade:"
-StrPerdeu: string "Voce Perdeu"
+StrVelocidade : string "Velocidade:" ; verificar necessidade
+StrPerdeu: string "FIM! Voce perdeu!"
 StrPressEnter: string "Aperte ENTER para"
-StrJogarNovmente: string"jogar novamente"
+StrJogarNovmente: string "jogar novamente!"
 StrOuP: string "Ou 'p' para"
 StrFinalizar: string "finalizar programa" 
 
 
 score : var #1
-
 pospessoa : var #1
-
-cont : var #1 ; usado para contar o numero de linhas entre cada letra que cai
-
+cont : var #1 ; usado para contar o numero de linhas entre cada letra que cai (PRA QUE? VAMOS DESCOBRIR)
 tecla : var #1 
-
 derrota : var #1 
-
 velocidade : var #1
-
 estado: var #1
 
+; Funcao que reinicia as variaveis do jogo
 reinicia_variaveis_do_jogo:
 	push r0
 	push r1
@@ -57,12 +59,12 @@ reinicia_variaveis_do_jogo:
 	loadn r0, #pos
 	loadn r1, #30
 	loadn r2, #40
-	call setVetor ;SET VETOR POS PARA {40,40,40,..,40}
+	call setVetor ; VERIFICAR:::: SET VETOR POS PARA {40,40,40,..,40}
 	
 	loadn r0, #char
 	loadn r1, #30
 	loadn r2, #0
-	call setVetor;SET CHAR POS PARA {0,0,0,..,0}
+	call setVetor; VERIFICAR:::: SET CHAR POS PARA {0,0,0,..,0}
 	
 	loadn r0 , #0 
 	store score, r0
@@ -70,7 +72,7 @@ reinicia_variaveis_do_jogo:
 	store cont, r0
 	store estado, r0
 	
-	loadn r0 , #8
+	loadn r0 , #5	; posicao pessoa
 	store pospessoa, r0
 	
 	loadn r0 , #255
@@ -86,8 +88,8 @@ reinicia_variaveis_do_jogo:
 	rts
 
 rand : var #1
-static rand, #53 ;SEED INICIAL
-;FUNC DE GERAR RAND NUMS DE 0 A 255
+static rand, #53 ; seed inicial
+; funcao que gera numeros aleatorios de 0 a 255
 ; (SEED * a + c) % p
 gera_rand:
 	push r0
@@ -95,13 +97,13 @@ gera_rand:
 	push r2
 	push r3
 	
-	load r0, rand ;SEED
-	loadn r1,#97  ;a
+	load r0, rand  ;SEED
+	loadn r1,#97   ;a
 	loadn r2, #133 ;c
 	loadn r3, #256 ;p
-	mul r0,r0,r1  ; SEED*a
-	add r0,r0,r2  ;	SEED*a + c
-	mod r0,r0,r3  ; (SEED*a + c) % p
+	mul r0,r0,r1   ; SEED*a
+	add r0,r0,r2   ;	SEED*a + c
+	mod r0,r0,r3   ; (SEED*a + c) % p
 	
 	store rand, r0
 	
@@ -111,18 +113,14 @@ gera_rand:
 	pop r0
 	rts
 
-;---- Inicio do Programa Principal -----
+; Inicio do Programa Principal
 
 main:
-
-
-	call reinicia_variaveis_do_jogo ;ou inicia, apenas zera tudo
+	call reinicia_variaveis_do_jogo ; ou inicia, apenas zera tudo
 	
 	;call Imprimestr   ;  r0 = Posicao da tela que o primeiro caractere da mensagem sera' impresso;  r1 = endereco onde comeca a mensagem; r2 = cor da mensagem.   Obs: a mensagem sera' impressa ate' encontrar "/0"
 	call imprimeTelaIni
-	call desenha_pessoa
-	
-	
+	call desenha_pessoa ; mudar para desenha_nave
 	
 	loadn r3, #1
 	loadn r4, #29
@@ -134,7 +132,6 @@ loopmain:
 	;call teste_rand
 	
 	call atualizaTela
-	
 	call atualizaScore
 	
 	load r0, velocidade
@@ -142,8 +139,8 @@ loopmain:
 	call imprimeNum
 	
 	call verificaDerrota ; e salva resposta em variavel global derrota
-	load r0,derrota
-	cmp r0,r3 ;se derrota == 1
+	load r0, derrota
+	cmp r0, r3 ; se derrota == 1
 	jeq telaDeDerrota
 	
 	call wait_com_comando
@@ -154,16 +151,16 @@ loopmain:
 telaDeDerrota:
 	;print DERROTA
 	;PARA RECOMEÇAR CLICAR EM ENTER
-	;CRIAR FUNC Q RESETA VARIAVEIS!!
+	;CRIAR FUNC Q RESETA VARIAVEIS (???) nao entendi
 	call imprimeTelaDerrota
 	
 	inchar r0
-	loadn r1, #13 ; começa novo jogo se apertar 'Enter'
+	loadn r1, #13  ; começa novo jogo se apertar 'Enter'
 	loadn r2, #'p' ; finaliza jogo se apertar 'p'
 	
 	cmp r0, r2
 	jeq fimPrograma
-	cmp r0,r1
+	cmp r0, r1
 	jne telaDeDerrota
 	call apagaTelaInteira
 	jmp main
@@ -189,29 +186,29 @@ imprimeTelaDerrota:
 	push r1
 	push r2
 	
-	loadn r0, #583	; Posicao na tela onde a mensagem sera' escrita
+	loadn r0, #583			; Posicao na tela onde a mensagem sera' escrita (VAMOS MUDAR PRO MEIO)
 	loadn r1, #StrPerdeu	; Carrega r1 com o endereco do vetor que contem a mensagem
+	loadn r2, #0			; Seleciona a COR da Mensagem
+	call Imprimestr
+	
+	loadn r0, #620				; Posicao na tela onde a mensagem sera' escrita
+	loadn r1, #StrPressEnter 	; Carrega r1 com o endereco do vetor que contem a mensagem
+	loadn r2, #0				; Seleciona a COR da Mensagem
+	call Imprimestr
+	
+	loadn r0, #661					; Posicao na tela onde a mensagem sera' escrita
+	loadn r1, #StrJogarNovmente 	; Carrega r1 com o endereco do vetor que contem a mensagem
+	loadn r2, #0					; Seleciona a COR da Mensagem
+	call Imprimestr
+	
+	loadn r0, #703		; Posicao na tela onde a mensagem sera' escrita
+	loadn r1, #StrOuP 	; Carrega r1 com o endereco do vetor que contem a mensagem
 	loadn r2, #0		; Seleciona a COR da Mensagem
 	call Imprimestr
 	
-	loadn r0, #620	; Posicao na tela onde a mensagem sera' escrita
-	loadn r1, #StrPressEnter ; Carrega r1 com o endereco do vetor que contem a mensagem
-	loadn r2, #0		; Seleciona a COR da Mensagem
-	call Imprimestr
-	
-	loadn r0, #661	; Posicao na tela onde a mensagem sera' escrita
-	loadn r1, #StrJogarNovmente ; Carrega r1 com o endereco do vetor que contem a mensagem
-	loadn r2, #0		; Seleciona a COR da Mensagem
-	call Imprimestr
-	
-	loadn r0, #703	; Posicao na tela onde a mensagem sera' escrita
-	loadn r1, #StrOuP ; Carrega r1 com o endereco do vetor que contem a mensagem
-	loadn r2, #0		; Seleciona a COR da Mensagem
-	call Imprimestr
-	
-	loadn r0, #740	; Posicao na tela onde a mensagem sera' escrita
+	loadn r0, #740			; Posicao na tela onde a mensagem sera' escrita
 	loadn r1, #StrFinalizar ; Carrega r1 com o endereco do vetor que contem a mensagem
-	loadn r2, #0		; Seleciona a COR da Mensagem
+	loadn r2, #0			; Seleciona a COR da Mensagem
 	call Imprimestr
 	
 	
@@ -234,17 +231,17 @@ apagaTelaInteira_loop:
 	rts
 	
 
-atualizaScore :
+atualizaScore:
 	push r0
 	push r1
 	push r2
 
 	loadn r0, #pos
 	loadn r1, #25
-	add r0,r0,r1
+	add r0, r0, r1
 	
-	loadi r1, r0 ; r1 = pos do char na linha da bandeja
-	load r2, pospessoa ;r2 = pos da pessoa 
+	loadi r1, r0 		; r1 = pos do char na linha da bandeja
+	load r2, pospessoa  ; r2 = pos da pessoa 
 	dec r2
 	
 	;Faz tres comparações pois é o tamanho da bandeja(3 posiçoes)
@@ -300,9 +297,7 @@ fimVerificaDerrota:
 	pop r1
 	pop r0
 	rts
-
-
-
+	
 executa_comando:
 	push r0
 	push r1
@@ -323,7 +318,6 @@ nao_executa_comando_1:
 	call move_direia
 	
 nao_executa_comando_2:
-	
 	pop r1
 	pop r0
 	rts
@@ -452,7 +446,7 @@ nao_move_esquerda:
 	rts
 
 ; ___
-; |O|
+; |O|  
 ;  |
 ; / \
 desenha_pessoa:
