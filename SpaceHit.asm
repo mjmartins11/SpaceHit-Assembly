@@ -385,7 +385,7 @@ move_direita:
 	
 	load r0, posnave
 	
-	loadn r1, #34
+	loadn r1, #27
 	; if(r0 == 38) nao move direita
 	; else move
 	
