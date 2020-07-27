@@ -31,11 +31,22 @@
 jmp main
 
 linha:	string "=================================="
-StrPerdeu:	string "FIM! Voce perdeu!"
+StrPerdeu:	string "FIM!"
 StrPressEnter:	string "Aperte ENTER para"
 StrJogarNovmente:	string "jogar novamente!"
 StrOuP:	string "Ou 'p' para"
 StrFinalizar:	string "finalizar programa" 
+StrApagar: string "         "
+
+strNave1: string "   /\\"
+strNave2: string " _/--\\_"
+strNave3: string "|_|..|_|"
+strNave4: string " * -- *"
+
+strInimigo1: string "  /..\\"
+strInimigo2: string " /:..:\\"   
+strInimigo3: string "(:)\\/(:)"
+strInimigo4: string "|/    \\|"
 
 pos:	var #30	; vetor de 30 posicoes
 char:	var #30	
@@ -46,6 +57,9 @@ estado:	var #1
 derrota:	var #1 
 velocidade:	var #1
 posnave:	var #1
+posInimigo: var #1
+
+
 
 ; ------- Inicializacao das variaveis do jogo -------
 inicializarVariaveis:
@@ -56,7 +70,7 @@ inicializarVariaveis:
 	loadn r0, #pos	; endereco de inicio do vetor
 	loadn r1, #30	; tamanho do vetor
 	loadn r2, #40	; valor a ser setado no vetor
-	call setVetor ; pos = {40, 40, 40, ..., 40}
+	call setVetor 	; pos = {40, 40, 40, ..., 40}
 	
 	loadn r0, #char
 	loadn r1, #30
@@ -72,6 +86,9 @@ inicializarVariaveis:
 	
 	loadn r0, #5	; posicao da nave
 	store posnave, r0
+	
+	loadn r0, #8
+	store posInimigo, r0
 	
 	loadn r0, #255
 	store tecla, r0
@@ -145,7 +162,7 @@ loop_main:
 telaDeDerrota:
 	; print DERROTA
 	; PARA RECOMEÇAR CLICAR EM ENTER
-	; CRIAR FUNC Q RESETA VARIAVEIS (???) nao entendi
+	; CRIAR FUNC Q RESETA VARIAVEIS 
 	call imprimirTelaDerrota
 	
 	inchar r0
@@ -385,7 +402,7 @@ move_direita:
 	
 	load r0, posnave
 	
-	loadn r1, #27
+	loadn r1, #24
 	; if(r0 == 38) nao move direita
 	; else move
 	
@@ -410,7 +427,7 @@ move_esquerda:
 	
 	load r0, posnave
 	
-	loadn r1, #5
+	loadn r1, #3
 	
 	; if(r0 == 1) nao move esquerda
 	; else move
@@ -438,90 +455,43 @@ desenharNave:
 	push r0
 	push r1
 	push r2
-	load r0, posnave
+	push r3
+	
+	load r3, posnave
 	
 ; ----- posicao da primeira linha da nave( /\ )
-	loadn r1, #1003
-	add r1, r1, r0
+	loadn r0, #1000
+	add r0, r0, r3
 	
-	loadn r2, #'/'
-	outchar r2, r1
-	inc r1
-	nop
-	loadn r2, #'\\'
-	outchar r2, r1
+	loadn r1, #strNave1	; Carrega r1 com o endereco do vetor que contem a mensagem
+	loadn r2, #3328			; Seleciona a COR da Mensagem
+	call Imprimestr
 	
 ; ------ posicao da segunda linha da nave ( _/--\_ )
-	loadn r1, #1041
-	add r1, r1, r0
+	loadn r0, #1040
+	add r0, r0, r3
 	
-	loadn r2, #'_'
-	outchar r2, r1 
-	loadn r2, #'/'
-	inc r1
-	outchar r2, r1 
-	loadn r2, #'-'
-	inc r1
-	outchar r2, r1 
-	inc r1
-	outchar r2, r1
-	loadn r2, #'\\'
-	inc r1
-	outchar r2, r1
-	loadn r2, #'_'
-	inc r1
-	outchar r2, r1
-	
+	loadn r1, #strNave2	; Carrega r1 com o endereco do vetor que contem a mensagem
+	loadn r2, #3328			; Seleciona a COR da Mensagem
+	call Imprimestr
+	 
 ; ----- posicao da terceira linha da nave ( |_|..|_| )
-	loadn r1, #1080
-	add r1, r1, r0
+	loadn r0, #1080
+	add r0, r0, r3
 	
-	loadn r2, #'|'
-	outchar r2, r1
-	loadn r2, #'_'
-	inc r1
-	outchar r2, r1
-	loadn r2, #'|'
-	inc r1
-	outchar r2, r1
-	loadn r2, #'.'
-	inc r1
-	outchar r2, r1
-	inc r1
-	outchar r2, r1
-	loadn r2, #'|'
-	inc r1
-	outchar r2, r1
-	loadn r2, #'_'
-	inc r1
-	outchar r2, r1
-	loadn r2, #'|'
-	inc r1
-	outchar r2, r1
+	loadn r1, #strNave3	; Carrega r1 com o endereco do vetor que contem a mensagem
+	loadn r2, #3328			; Seleciona a COR da Mensagem
+	call Imprimestr
 	 
 ; ----- posicao da quarta linha da nave ( * -- * )
-	loadn r1, #1121
-	add r1, r1, r0
+	loadn r0, #1120
+	add r0, r0, r3
 	
-	loadn r2, #'*'
-	outchar r2, r1 
-	                                     
-	inc r1
-	
-	loadn r2, #'-'
-	inc r1
-	nop
-	outchar r2, r1
-	inc r1
-	nop
-	outchar r2, r1
-	inc r1
-	nop
-	loadn r2, #'*'
-	inc r1
-	nop
-	outchar r2, r1 
+	loadn r1, #strNave4	; Carrega r1 com o endereco do vetor que contem a mensagem
+	loadn r2, #3328			; Seleciona a COR da Mensagem
+	call Imprimestr
 
+	pop r3
 	pop r2
 	pop r1
 	pop r0
@@ -531,95 +501,77 @@ deleta_nave:
 	push r0
 	push r1
 	push r2
+	push r3
 	
-	load r0, posnave
+	load r3, posnave
 	
-; ------ posoicao da primeira linha da nave
-	loadn r1, #1003 
-	add r1, r1, r0
+; ----- posicao da primeira linha da nave( /\ )
+	loadn r0, #1000
+	add r0, r0, r3
 	
-	loadn r2, #' '
-	outchar r2, r1
-	inc r1
-	nop
-	outchar r2, r1
+	loadn r1, #StrApagar	; Carrega r1 com o endereco do vetor que contem a mensagem
+	loadn r2, #3328			; Seleciona a COR da Mensagem
+	call Imprimestr
 	
-; ----- posicao da segunda linha nave
-	loadn r1, #1041
-	add r1, r1, r0
+; ------ posicao da segunda linha da nave ( _/--\_ )
+	loadn r0, #1040
+	add r0, r0, r3
 	
-	outchar r2, r1 
-	inc r1
-	nop
-	outchar r2, r1 
-	inc r1
-	nop
-	outchar r2, r1
-	inc r1
-	nop
-	outchar r2, r1 
-	inc r1
-	nop
-	outchar r2, r1
-	inc r1
-	nop
-	outchar r2, r1 
-	inc r1
-	nop
-	outchar r2, r1 
+	loadn r1, #StrApagar	; Carrega r1 com o endereco do vetor que contem a mensagem
+	loadn r2, #3328			; Seleciona a COR da Mensagem
+	call Imprimestr
+	 
+; ----- posicao da terceira linha da nave ( |_|..|_| )
+	loadn r0, #1080
+	add r0, r0, r3
 	
-; ----- posicao da terceira linha da nave
-	loadn r1, #1080
-	add r1, r1, r0
+	loadn r1, #StrApagar	; Carrega r1 com o endereco do vetor que contem a mensagem
+	loadn r2, #3328			; Seleciona a COR da Mensagem
+	call Imprimestr
+	 
+; ----- posicao da quarta linha da nave ( * -- * )
+	loadn r0, #1120
+	add r0, r0, r3
 	
-	outchar r2, r1 
-	inc r1
-	nop
-	outchar r2, r1 
-	inc r1
-	nop
-	outchar r2, r1
-	inc r1
-	nop
-	outchar r2, r1 
-	inc r1
-	nop
-	outchar r2, r1
-	inc r1
-	nop
-	outchar r2, r1 
-	inc r1
-	nop
-	outchar r2, r1
-	inc r1
-	nop
-	outchar r2, r1 
-	inc r1
-	nop
-	outchar r2, r1
+	loadn r1, #StrApagar	; Carrega r1 com o endereco do vetor que contem a mensagem
+	loadn r2, #3328			; Seleciona a COR da Mensagem
+	call Imprimestr
 	
-; ----- posicao da quarta linha da nave
-	loadn r1, #1121
-	add r1, r1, r0
-	
-	outchar r2, r1 
-	inc r1
-	inc r1
-	nop
-	outchar r2, r1
-	inc r1
-	nop
-	outchar r2, r1 
-	inc r1
-	inc r1
-	nop
-	outchar r2, r1  
-	
+	pop r3
 	pop r2
 	pop r1
 	pop r0
 	rts
 
+;------------------------------------------------------------
+
+moveInimigo:
+	push r0
+	push r1
+	push r2
+	
+	load r0, posInimigo
+	
+	loadn r1, #1003
+	; if(r0 > 1003) chegou na linha da nave
+	
+	cmp r0, r1
+;	jgr perdeVida 
+	
+	loadn r2, #40
+	add r0, r0, r2
+	call deletarInimigo
+	store posInimigo, r0
+	call desenharInimigo
+	
+	pop r2
+	pop r1
+	pop r0
+	rts
+	
+;perdeVida:
+;	call deletarInimigo
+;	rts
 
 ;  /""\   
 ; /:..:\
@@ -629,13 +581,91 @@ desenharInimigo:
 	push r0
 	push r1
 	push r2
-	;load r0, posinimigo
+	push r3
 	
-; ----- posicao da primeira linha da nave( /\ )
-	loadn r1, #1003
-	add r1, r1, r0
+	load r3, posInimigo
+; ----- posicao da primeira linha do inimigo /""\ 
+	loadn r0, #0
+	add r0, r0, r3
+	loadn r1, #strInimigo1	; Carrega r1 com o endereco do vetor que contem a mensagem
+	loadn r2, #512		; verde
+	call Imprimestr
+	
+; ------ posicao da segunda linha do inimigo /:..:\
+	loadn r0, #40
+	add r0, r0, r3
+	
+	loadn r1, #strInimigo2	; Carrega r1 com o endereco do vetor que contem a mensagem
+	loadn r2, #1024			; azul
+	call Imprimestr
+	 
+; ----- posicao da terceira linha do inimigo (:)\/(:)
+	loadn r0, #80
+	add r0, r0, r3
+	
+	loadn r1, #strInimigo3	; Carrega r1 com o endereco do vetor que contem a mensagem
+	loadn r2, #1280			; roxo
+	call Imprimestr
+	 
+; ----- posicao da quarta linha do inimigo |/    \|
+	loadn r0, #120
+	add r0, r0, r3
+	
+	loadn r1, #strInimigo4	; Carrega r1 com o endereco do vetor que contem a mensagem
+	loadn r2, #3328			; rosa
+	call Imprimestr
+	
+	pop r3
+	pop r2
+	pop r1
+	pop r0
+	rts
 
 deletarInimigo:
+	push r0
+	push r1
+	push r2
+	push r3
+	
+	load r3, posInimigo
+	
+; ----- posicao da primeira linha da nave( /\ )
+	loadn r0, #0
+	add r0, r0, r3
+	
+	loadn r1, #StrApagar	; Carrega r1 com o endereco do vetor que contem a mensagem
+	loadn r2, #3328			; Seleciona a COR da Mensagem
+	call Imprimestr
+	
+; ------ posicao da segunda linha da nave ( _/--\_ )
+	loadn r0, #40
+	add r0, r0, r3
+	
+	loadn r1, #StrApagar	; Carrega r1 com o endereco do vetor que contem a mensagem
+	loadn r2, #3328			; Seleciona a COR da Mensagem
+	call Imprimestr
+	 
+; ----- posicao da terceira linha da nave ( |_|..|_| )
+	loadn r0, #80
+	add r0, r0, r3
+	
+	loadn r1, #StrApagar	; Carrega r1 com o endereco do vetor que contem a mensagem
+	loadn r2, #3328			; Seleciona a COR da Mensagem
+	call Imprimestr
+	 
+; ----- posicao da quarta linha da nave ( * -- * )
+	loadn r0, #120
+	add r0, r0, r3
+	
+	loadn r1, #StrApagar	; Carrega r1 com o endereco do vetor que contem a mensagem
+	loadn r2, #3328			; Seleciona a COR da Mensagem
+	call Imprimestr
+	
+	pop r3
+	pop r2
+	pop r1
+	pop r0
+	rts
 
 
 wait:
@@ -675,6 +705,7 @@ atualizarTela:
 	
 	call apagaVetDaTela
 	call deleta_nave
+	call moveInimigo
 	call moveLetras
 	
 	loadn r1, #1
@@ -702,7 +733,7 @@ atualizarTela:
 	load r0, rand
 	
 	loadn r1, #26
-	mod r0, r0, r1	; gera valor entre 0 e 25(cada um representa um caractere do alfabeto)
+	mod r0, r0, r1	; gera valor entre 0 e 25 (cada um representa um caractere do alfabeto)
 	
 	loadn r1, #'a'
 	add r0, r1, r0 	; transforma de [0 à 25] para [a à z]
@@ -722,6 +753,7 @@ pula_escrita_atualizarTela:
 	
 	call vetNaTela
 	call desenharNave
+	call desenharInimigo
 	
 	pop r7
 	pop r6
@@ -1050,3 +1082,4 @@ loop_TestRandOut:
 	jle loop_TestRandOut	; if(i<40)
 
 	rts
+	
