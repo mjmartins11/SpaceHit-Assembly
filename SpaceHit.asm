@@ -30,7 +30,7 @@
 ; Coracao provisorio: S2 <3
 jmp main
 
-linha:	string "=================================="
+superficie:	string "========================================"
 StrPerdeu:	string "FIM!"
 StrPressEnter:	string "Aperte ENTER para"
 StrJogarNovmente:	string "jogar novamente!"
@@ -48,6 +48,8 @@ strInimigo2: string " /:..:\\"
 strInimigo3: string "(:)\\/(:)"
 strInimigo4: string "|/    \\|"
 
+strTiro: string "!"
+
 pos:	var #30	; vetor de 30 posicoes
 char:	var #30	
 cont:	var #1	; usado para contar o numero de linhas entre cada letra que cai 
@@ -56,7 +58,7 @@ score:	var #1
 estado:	var #1
 derrota:	var #1 
 velocidade:	var #1
-posnave:	var #1
+posNave:	var #1
 posInimigo: var #1
 
 
@@ -85,7 +87,7 @@ inicializarVariaveis:
 	store estado, r0
 	
 	loadn r0, #5	; posicao da nave
-	store posnave, r0
+	store posNave, r0
 	
 	loadn r0, #8
 	store posInimigo, r0
@@ -138,32 +140,60 @@ main:
 	; r1 = endereco onde comeca a mensagem~
 	; r2 = cor da mensagem.   Obs: a mensagem sera' impressa ate' encontrar "/0"
 	call imprimirTelaInicio
-	call desenharNave	; mudar para desenha_nave
+	call desenharNave
+	
+	; gerando a primeira posição do inimigo de modo aleatório
+	call gerarRand
+	load r0, rand
+	
+	loadn r1, #32	; 30 = largura da tela onde as letras surgem
+	mod r0, r0, r1 	; r0 = r0 % 30
+	
+	store posInimigo, r0
+	
+	call desenharInimigo
 	
 	loadn r3, #1
 	loadn r4, #29
 	loadn r5, #40
 	
-loop_main:	
+loop_main:
 	call atualizarTela
 	call atualizarScore
 	
-	load r0, velocidade
-
-	call verificarDerrota	; e salva resposta em variavel global derrota
-	load r0, derrota
-	cmp r0, r3	; se derrota == 1
-	jeq telaDeDerrota
+	;load r0, velocidade
 	
-	call wait_com_comando
+	call verificarTecla
 	
 	jmp loop_main
 	
-telaDeDerrota:
-	; print DERROTA
-	; PARA RECOMEÇAR CLICAR EM ENTER
-	; CRIAR FUNC Q RESETA VARIAVEIS 
-	call imprimirTelaDerrota
+moveInimigo:
+	push r0
+	push r1
+	push r2
+	
+	load r0, posInimigo
+	
+	loadn r1, #1003
+	
+	; if(r0 > 1003) chegou na linha da nave
+	cmp r0, r1
+	jgr fimJogo 
+	
+	loadn r2, #40
+	add r0, r0, r2
+	
+	call deletarInimigo
+	store posInimigo, r0
+	call desenharInimigo
+	
+	pop r2
+	pop r1
+	pop r0
+	rts
+		
+fimJogo:
+	call imprimirFimJogo
 	
 	inchar r0
 	loadn r1, #13  	; começa novo jogo se apertar 'Enter'
@@ -173,7 +203,7 @@ telaDeDerrota:
 	jeq fimPrograma
 	
 	cmp r0, r1
-	jne telaDeDerrota
+	jne fimJogo
 	
 	call apagaTelaInteira
 	jmp main
@@ -191,7 +221,7 @@ fimPrograma:
 	
 ;---- Inicio das Subrotinas -----
 
-imprimirTelaDerrota:
+imprimirFimJogo:
 	push r0
 	push r1
 	push r2
@@ -201,22 +231,22 @@ imprimirTelaDerrota:
 	loadn r2, #0			; Seleciona a COR da Mensagem
 	call Imprimestr
 	
-	loadn r0, #620				; Posicao na tela onde a mensagem sera' escrita
+	loadn r0, #610				; Posicao na tela onde a mensagem sera' escrita
 	loadn r1, #StrPressEnter 	; Carrega r1 com o endereco do vetor que contem a mensagem
 	loadn r2, #0				; Seleciona a COR da Mensagem
 	call Imprimestr
 	
-	loadn r0, #661					; Posicao na tela onde a mensagem sera' escrita
+	loadn r0, #651					; Posicao na tela onde a mensagem sera' escrita
 	loadn r1, #StrJogarNovmente 	; Carrega r1 com o endereco do vetor que contem a mensagem
 	loadn r2, #0					; Seleciona a COR da Mensagem
 	call Imprimestr
 	
-	loadn r0, #703		; Posicao na tela onde a mensagem sera' escrita
+	loadn r0, #693		; Posicao na tela onde a mensagem sera' escrita
 	loadn r1, #StrOuP 	; Carrega r1 com o endereco do vetor que contem a mensagem
 	loadn r2, #0		; Seleciona a COR da Mensagem
 	call Imprimestr
 	
-	loadn r0, #740			; Posicao na tela onde a mensagem sera' escrita
+	loadn r0, #730			; Posicao na tela onde a mensagem sera' escrita
 	loadn r1, #StrFinalizar ; Carrega r1 com o endereco do vetor que contem a mensagem
 	loadn r2, #0			; Seleciona a COR da Mensagem
 	call Imprimestr
@@ -249,7 +279,7 @@ atualizarScore:
 	add r0, r0, r1
 	
 	loadi r1, r0 		; r1 = pos do char na linha da bandeja
-	load r2, posnave  ; r2 = pos da pessoa 
+	load r2, posNave  ; r2 = pos da pessoa 
 	dec r2
 	
 	; Faz tres comparações pois é o tamanho da bandeja(3 posiçoes)
@@ -285,7 +315,7 @@ atualizarMiss:
 	pop r0
 	rts
 
-verificarDerrota:
+verificarFimJogo:
 	push r0
 	push r1
 	push r2
@@ -297,12 +327,12 @@ verificarDerrota:
 	loadi r1, r0
 	loadn r2, #40
 	cmp r1, r2
-	jeq fimVerificarDerrota
+	jeq fimVerificarFimJogo
 	
 	loadn r1, #1
 	store derrota, r1
 	
-fimVerificarDerrota:
+fimVerificarFimJogo:
 	pop r2
 	pop r1
 	pop r0
@@ -314,25 +344,34 @@ executa_comando:
 
 	load r0, tecla
 	
+	; se nao for a tecla 'a' então não move para esquerda
 	loadn r1, #'a'
 	cmp r0, r1
 	jne nao_executa_comando_1
 	
-	call move_esquerda
+	call moveEsquerda
 	
 nao_executa_comando_1:
+	; verifica se a tecla pressionada é realmente 'd'
 	loadn r1, #'d'
 	cmp r0, r1
 	jne nao_executa_comando_2
 	
-	call move_direita
+	call moveDireita
 	
 nao_executa_comando_2:
+	loadn r1, #32
+	cmp r0, r1
+	jne nao_executa_comando_3
+	
+	call atirar
+	
+nao_executa_comando_3:
 	pop r1
 	pop r0
 	rts
 
-wait_com_comando:
+verificarTecla:
 	push r0
 	push r1
 	push r2
@@ -341,20 +380,20 @@ wait_com_comando:
 	push r5
 	
 	load r5, estado
-	
 	loadn r0, #0
-
 	loadn r3, #255
-	
 	loadn r1, #100 	; na placa mudar para 10
 	
-wait_com_comando1:
+; tecla espaço => 32 na tabela ascii	
+	
+verificarTeclaPressionada:
 	load r2, velocidade
-	wait_com_comando2:
-		inchar r4
+	
+	esperar_PressionarTecla:
+		inchar r4	; recebe tecla que o usuário pressionou
 
-		cmp r4, r3	; inchar == 255
-		jne diff255
+		cmp r4, r3	; compara tecla com 255 (maior valor da tabela ascii)
+		jne diff255	
 			
 	loadn r5, #0
 	jmp wait_com_dps
@@ -370,11 +409,11 @@ wait_com_comando1:
 	wait_com_dps:
 		dec r2
 		cmp r2, r0
-		jne wait_com_comando2
+		jne esperar_PressionarTecla
 			
 	dec r1
 	cmp r1, r0
-	jne wait_com_comando1
+	jne verificarTeclaPressionada
 	
 	; VERIFICAR SE VALORES FAZEM SENTIDO AO PASSAR PRA PLACA
 	load r2, velocidade
@@ -396,57 +435,135 @@ fim_wait_com_comando:
 	pop r0
 	rts
 
-move_direita:
+moveDireita:
 	push r0
 	push r1
 	
-	load r0, posnave
+	load r0, posNave
 	
-	loadn r1, #24
+	loadn r1, #32
+	
 	; if(r0 == 38) nao move direita
 	; else move
 	
 	cmp r0, r1
-	jeq nao_move_direita
+	jeq nao_moveDireita
 	
 	inc r0
-	call deleta_nave
-	store posnave, r0
+	call deletarNave
+	store posNave, r0
 	call desenharNave
 	
 	call atualizarScore	; permitir pegar a fruta enquanto anda pra cima dela
 	
-nao_move_direita:
+nao_moveDireita:
 	pop r1
 	pop r0
 	rts
 
-move_esquerda:
+moveEsquerda:
 	push r0
 	push r1
 	
-	load r0, posnave
+	load r0, posNave
 	
-	loadn r1, #3
+	loadn r1, #0
 	
 	; if(r0 == 1) nao move esquerda
 	; else move
 	
 	cmp r0, r1
-	jeq nao_move_esquerda
+	jeq nao_moveEsquerda
 	
 	dec r0
-	call deleta_nave
-	store posnave, r0
-	call desenharNave
-	
+	call deletarNave
+	store posNave, r0
+	call desenharNav
+e	
 	call atualizarScore	; permitir pegar a fruta enquanto anda pra cima dela
 	
-nao_move_esquerda:
+nao_moveEsquerda:
 	pop r1
 	pop r0
 	rts
 
+; criar rotina para atirar e também para movimentar o tiro
+; movimentar o tiro: usar flag para verificar se o tiro existe
+atirar:
+	push r0
+	
+	load r0, posNave
+	call moveTiro
+	
+; param:
+; r0 = posição atual do tiro
+moveTiro:
+	push r0
+	push r1
+	push r2
+	load r2, posInimigo
+	
+	loadn r1, #40 
+	cmp r0, r1	; verifica se tiro chegou no topo
+	jle acertouTopo
+	
+	; se posTiro > posInimigo+120 e posTiro < posInimigo+128 entao acertou
+	loadn r1, #120
+	add r1, r1, r2
+	cmp r0, r1 ;r0 = posTiro, r1 = posInimo 
+	jgr verificaMenor
+	
+	call deletarTiro
+	loadn r1, #40
+	sub r0, r0, r1
+	call desenharTiro
+	call fimMoveTiro
+	
+acertouTopo:
+	call deletarTiro
+	call fimMoveTiro	
+
+verificaMenor:
+	loadn r2, #8
+	add r1, r1, r2
+	cmp r0, r1
+	jle acertouInimigo
+	
+acertouInimigo:
+	call deletarInimigo
+	call deletarTiro
+	;call aumentarScore
+	
+fimMoveTiro:
+	pop r2
+	pop r1
+	pop r0
+	rts
+	
+; param
+; r0 = posição atual do tiro
+desenharTiro:
+	push r0
+	push r1
+	
+	loadn r1, #strTiro
+	outchar r1, r0
+	
+	pop r1
+	pop r0
+	rts
+	
+deletarTiro:
+	push r0
+	push r1
+
+	loadn r1, #' '
+	outchar r1, r0
+	
+	pop r1
+	pop r0
+	rts
+	
 ;   /\ 
 ; _/--\_ 
 ;|_|..|_|
@@ -457,7 +574,7 @@ desenharNave:
 	push r2
 	push r3
 	
-	load r3, posnave
+	load r3, posNave
 	
 ; ----- posicao da primeira linha da nave( /\ )
 	loadn r0, #1000
@@ -497,13 +614,13 @@ desenharNave:
 	pop r0
 	rts
 	
-deleta_nave:
+deletarNave:
 	push r0
 	push r1
 	push r2
 	push r3
 	
-	load r3, posnave
+	load r3, posNave
 	
 ; ----- posicao da primeira linha da nave( /\ )
 	loadn r0, #1000
@@ -544,34 +661,6 @@ deleta_nave:
 	rts
 
 ;------------------------------------------------------------
-
-moveInimigo:
-	push r0
-	push r1
-	push r2
-	
-	load r0, posInimigo
-	
-	loadn r1, #1003
-	; if(r0 > 1003) chegou na linha da nave
-	
-	cmp r0, r1
-;	jgr perdeVida 
-	
-	loadn r2, #40
-	add r0, r0, r2
-	call deletarInimigo
-	store posInimigo, r0
-	call desenharInimigo
-	
-	pop r2
-	pop r1
-	pop r0
-	rts
-	
-;perdeVida:
-;	call deletarInimigo
-;	rts
 
 ;  /""\   
 ; /:..:\
@@ -703,55 +792,59 @@ atualizarTela:
 	push r6
 	push r7
 	
-	call apagaVetDaTela
-	call deleta_nave
+	;call apagaVetDaTela
+	call deletarNave
+	call deletarInimigo
 	call moveInimigo
-	call moveLetras
+	;call moveLetras
 	
-	loadn r1, #1
-	load r6, cont
-	add r7, r6, r1
+	;loadn r1, #1
+	;load r6, cont
+	;add r7, r6, r1
 	
-	loadn r1, #8	; numero de linhas entre cada letra
-	mod r7, r7, r1
-	store cont, r7
+	;loadn r1, #8	; numero de linhas entre cada letra
+	;mod r7, r7, r1
+	;store cont, r7
 	
-	mov r2, r6
+	;mov r2, r6
 	
-	loadn r6, #pos
-	loadn r7, #char
+	;loadn r6, #pos
+	;loadn r7, #char
 	
-	loadn r1, #40
-	loadn r0, #0
-	storei r6, r1
-	storei r7, r0
+	;loadn r1, #40
+	;loadn r0, #0
+	;storei r6, r1
+	;storei r7, r0
 	
-	cmp r2,r0	; se cont != 0 nao escreve letra na tela
-	jne pula_escrita_atualizarTela
-	
-	call gerarRand
-	load r0, rand
-	
-	loadn r1, #26
-	mod r0, r0, r1	; gera valor entre 0 e 25 (cada um representa um caractere do alfabeto)
-	
-	loadn r1, #'a'
-	add r0, r1, r0 	; transforma de [0 à 25] para [a à z]
+	;cmp r2, r0	; se cont != 0 nao escreve letra na tela
+	;jne pula_escrita_atualizarTela
 
-	call gerarRand
-	load r1, rand
+
+; ----- gerando letra aleatória	
+	;call gerarRand
+	;load r0, rand
 	
-	loadn r2, #30 ; largura da tela onde as letras surgem
-	mod r1, r1, r2 ; r1 = r1 % 20
-	loadn r2, #4
-	add r1, r1, r2
+	;loadn r1, #26
+	;mod r0, r0, r1	; gera valor entre 0 e 25 (cada um representa um caractere do alfabeto)
 	
-	storei r6, r1
-	storei r7, r0
+	;loadn r1, #'a'
+	;add r0, r1, r0 	; transforma de [0 à 25] para [a à z]
+
+; ----- gerando lugar na tela aleatória para a letra descer
+	;call gerarRand
+	;load r1, rand
+	
+	;loadn r2, #30 ; 30 = largura da tela onde as letras surgem
+	;mod r1, r1, r2 ; r1 = r1 % 30
+	;loadn r2, #4
+	;add r1, r1, r2
+	
+	;storei r6, r1
+	;storei r7, r0
 	
 pula_escrita_atualizarTela:	
 	
-	call vetNaTela
+	;call vetNaTela
 	call desenharNave
 	call desenharInimigo
 	
@@ -879,8 +972,6 @@ naoPrintVetNaTela:
 moveLetras:
 	push r0
 	push r1
-	push r2
-	push r3
 	push r4
 	push r5
 	push r6
@@ -890,16 +981,16 @@ moveLetras:
 	loadn r7, #char
 	
 	loadn r0, #28
-	loadn r1, #0 ; i=0
+	loadn r1, #0	; i = 0
 		
-	add r6, r6, r0; r6[final]
-	add r7, r7, r0; r7[final]
+	add r6, r6, r0	; r6[final]
+	add r7, r7, r0	; r7[final]
 	
 	loadn r0, #29
 	
-loop_MoveLetras:
-	loadi r4, r6 ; r4 = pos na linha
-	loadi r5, r7 ; r5 = char da linha
+loop_moveLetras:
+	loadi r4, r6	; r4 = pos na linha
+	loadi r5, r7	; r5 = char da linha
 	
 	inc r6
 	inc r7
@@ -914,14 +1005,12 @@ loop_MoveLetras:
 	
 	inc r1
 	cmp r1,r0
-	jne loop_MoveLetras
+	jne loop_moveLetras
 	
 	pop r7
 	pop r6
 	pop r5
 	pop r4
-	pop r3
-	pop r2
 	pop r1
 	pop r0
 	rts
@@ -932,40 +1021,16 @@ imprimirTelaInicio:
 	push r0	
 	push r1
 	push r2
-	push r3
-	push r4
-	push r5
 	
-	loadn r0, #1163		; Posicao na tela onde a mensagem sera' escrita
-	loadn r1, #linha	; Carrega r1 com o endereco do vetor que contem a mensagem
+	loadn r0, #1160		; Posicao na tela onde a mensagem sera' escrita
+	loadn r1, #superficie	; Carrega r1 com o endereco do vetor que contem a mensagem
 	loadn r2, #0		; Seleciona a COR da Mensagem
 	call Imprimestr
-	
+
 	load r0, score
 	loadn r1, #39
 	call imprimeNum
 	
-	loadn r5, #'|'
-	loadn r0, #40
-	loadn r1, #0
-	loadn r2, #40
-	
-loop_imprimirTelaInicio:
-	mul r3, r2, r1
-	loadn r4, #3
-	add r3, r3, r4
-	outchar r5, r3
-	loadn r4, #153
-	add r3, r4, r3
-	outchar r5, r3
-	
-	inc r1
-	cmp r1, r0
-	jne loop_imprimirTelaInicio
-	
-	pop r5
-	pop r4
-	pop r3
 	pop r2
 	pop r1
 	pop r0
