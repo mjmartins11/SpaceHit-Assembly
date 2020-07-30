@@ -1,4 +1,4 @@
-### SPACE HIT - Jogo em Assembly ICMC
+# SPACE HIT - Jogo em Assembly ICMC
 
 O projeto consiste em um jogo feito em linguagem Assembly ICMC que se passa em um cenário espacial, onde temos uma nave que o usuário controla para atirar lasers em naves inimigas que sobrevoam o território. O projeto foi feito para disciplina de Laboratório de Organização e Arquitetura de Computadores (SCC0119) e visa aplicar conceitos de programação em baixo nível e funcionamento de processadores.
 
@@ -8,6 +8,6 @@ As teclas A e S são utilizadas para controlar a nave do jogador. E a tecla de e
 
 ## Vídeo do Jogo
 
-# Autores:
+### Autores:
 Isadora Carolina Siebert
 Marlon José Martins
