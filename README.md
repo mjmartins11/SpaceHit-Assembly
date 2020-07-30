@@ -9,5 +9,5 @@ As teclas A e S são utilizadas para controlar a nave do jogador. E a tecla de e
 ## Vídeo do Jogo
 
 ### Autores:
-Isadora Carolina Siebert
+Isadora Carolina Siebert<br>
 Marlon José Martins
