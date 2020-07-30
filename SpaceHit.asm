@@ -51,6 +51,7 @@ strInimigo2: string " /:..:\\"
 strInimigo3: string "(:)\\/(:)"
 strInimigo4: string "|/    \\|"
 
+letra:			var #1
 score:			var #1	; pontuação do jogador
 
 posNave:		var #1
@@ -67,6 +68,19 @@ flagTiro:		var #1
 
 ; ------- Funcao principal do jogo -------
 main:
+	call apagaTelaInteira
+	;call imprimirTelaComeco
+	loadn r1, #telaInicioLinha0		; Imprime a tela inicial do jogo na cor marrom;
+	loadn r2, #1536
+	call ImprimeTela
+	
+loopInicio:
+	call DigLetra
+	loadn r0, #' '			; Quando a tecla espaco for acionada, comeca o jogo
+	load r1, letra
+	cmp r0, r1
+	jne loopInicio
+	
 	call apagaTelaInteira
 	call imprimirTelaInicio
 	
@@ -108,6 +122,54 @@ Loop:
 	inc r0 			;c++
 	jmp Loop
 
+DigLetra:							; Espera que uma tecla seja digitada e salva na variavel global Letra
+	push r0
+	push r1
+	loadn r1, #255
+
+DigLetra_Loop:
+	inchar r0					; Le o teclado, se nada for digitado = 255
+	cmp r0, r1					;compara r0 com 255
+	jeq DigLetra_Loop			; Fica lendo ate que o jogador digite uma tecla valida
+
+	store letra, r0					; Salva a tecla na variavel global "Letra"
+
+	pop r1
+	pop r0
+	rts
+
+ImprimeTela: 						;  Rotina de impresao do cenario na tela
+
+	;  r1 = endereco onde comeca a primeira linha do Cenario
+	;  r2 = cor do Cenario para ser impresso
+	
+	push r0
+	push r1
+	push r2
+	push r3
+	push r4
+	push r5
+
+	loadn r0, #0  					; Posicao inicial
+	loadn r3, #40  					; Incremento da posicao da tela
+	loadn r4, #41  					; Incremento do ponteiro das linhas da tela
+	loadn r5, #1200 				; Limite da tela
+	
+   ImprimeTela_Loop:
+		call Imprimestr
+		add r0, r0, r3  			; Incrementa posicao para a segunda linha na tela
+		add r1, r1, r4  			; Incrementa o ponteiro para o comeco da proxima linha na memoria
+		cmp r0, r5					; Compara r0 com 1200
+		jne ImprimeTela_Loop		; Enquanto r0 < 1200
+
+	pop r5							; Resgata os valores dos registradores
+	pop r4
+	pop r3
+	pop r2
+	pop r1
+	pop r0
+	rts
+	
 ;---------------------------------------
 MoveNave:
 	push r0
@@ -833,3 +895,37 @@ loop_ImprimeNum:
 	pop r1
 	pop r0
 	rts
+	
+; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+; 			TELA DE INICIO
+; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+telaInicioLinha0  : string "                                        "
+telaInicioLinha1  : string "                                        "
+telaInicioLinha2  : string "                                        "
+telaInicioLinha3  : string "                                        "
+telaInicioLinha4  : string "                                        "
+telaInicioLinha5  : string "       ____                             "
+telaInicioLinha6  : string "      |  _ \\ _____  __                  "
+telaInicioLinha7  : string "      | |_) / _ \\ \\/ /                  "
+telaInicioLinha8  : string "      |  _ <  __/>  <                   "
+telaInicioLinha9  : string "      |_|_\\_\\___/_/\\_\\                  "                    
+telaInicioLinha10 : string "      / ___|  ___ __ _ _ __   ___       "                  
+telaInicioLinha11 : string "      \\___ \\ / __/ _` | '_ \\ / _ \\      "                  
+telaInicioLinha12 : string "       ___) | (_| (_| | |_) |  __/      "
+telaInicioLinha13 : string "      |____/ \\___\\__,_| .__/ \\___|      "                   
+telaInicioLinha14 : string "                      |_|               "                  
+telaInicioLinha15 : string "                                        "
+telaInicioLinha16 : string "                                        "
+telaInicioLinha17 : string "                                        "
+telaInicioLinha18 : string "                                        "
+telaInicioLinha19 : string "     PRESSIONE ESPACO PARA INICIAR      "
+telaInicioLinha20 : string "                                        "
+telaInicioLinha21 : string "                                        "
+telaInicioLinha22 : string "                                        "
+telaInicioLinha23 : string "                                        "
+telaInicioLinha24 : string "                                        "
+telaInicioLinha25 : string "                                        "
+telaInicioLinha26 : string "                                        "
+telaInicioLinha27 : string "                                        "
+telaInicioLinha28 : string "                                        "
+telaInicioLinha29 : string "                                        "
