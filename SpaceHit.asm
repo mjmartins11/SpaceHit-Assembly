@@ -30,12 +30,16 @@
 jmp main
 
 superficie:			string "========================================"
+
 StrPerdeu:			string "FIM!"
 StrPressEnter:		string "Aperte ENTER para"
 StrJogarNovmente:	string "jogar novamente!"
 StrOuP:				string "Ou 'p' para"
 StrFinalizar:		string "finalizar programa" 
 StrApagar: 			string "         "
+
+msgFim1: string "S E U  S C O R E  F O I: "
+msgFim2: string "Quer jogar novamente? <s/n>"
 
 strNave1: 	 string "   /\\"
 strNave2:	 string " _/--\\_"
@@ -47,55 +51,57 @@ strInimigo2: string " /:..:\\"
 strInimigo3: string "(:)\\/(:)"
 strInimigo4: string "|/    \\|"
 
+score:			var #1	; pontuação do jogador
 
-cont:			var #1	; usado para contar o numero de linhas entre cada letra que cai 
-tecla:			var #1 
-score:			var #1
 posNave:		var #1
 posAntNave:		var #1
+
+velInimigo:		var #1
 posInimigo:		var #1
 posAntInimigo:	var #1
+flagInimigo:	var #1	; utilizada para verificar se existe um inimigo
+
 posTiro: 		var #1
 posAntTiro:		var #1
 flagTiro:		var #1
-flagInimigo:	var #1
 
 ; ------- Funcao principal do jogo -------
 main:
 	call apagaTelaInteira
+	call imprimirTelaInicio
 	
-	loadn r0, #1016
-	store posNave, r0		;  Posicao Atual da Nave
+	loadn r0, #1016			; posição inicial da nave na tela (1016)
+	store posNave, r0		; posicao Atual da Nave
 	store posAntNave, r0
-	;call MoveNave_Desenha
 	
 	loadn r0, #0	
 	store flagTiro, r0		; Zera o Flag para marcar que ainda nao Atirou!
 	store posTiro, r0		; Zera Posicao Atual do Tiro
 	store posAntTiro, r0
 	
+	loadn r1, #5
+	store velInimigo, r1	
 	store flagInimigo, r0
 	store posInimigo, r0		; Zera Posicao Atual do Inimigo
 	store posAntInimigo, r0
 	
+	
 	loadn r2, #0			; Para verificar se (mod(c/10)==0	
-		
-	call imprimirTelaInicio
 	
 Loop:
-	loadn r1, #15
-	mod r1, r0, r1
-	cmp r1, r2		; if (mod(c/10)==0
-	ceq MoveNave	; Chama Rotina de movimentacao da Nave
-
-	loadn r1, #15
-	mod r1, r0, r1
-	cmp r1, r2		; if (mod(c/30)==0
-	ceq MoveAlien	; Chama Rotina de movimentacao do Inimigo
-
-	loadn r1, #2
+	loadn r1, #1
 	mod r1, r0, r1
 	cmp r1, r2		; if (mod(c/2)==0
+	ceq MoveNave	; Chama Rotina de movimentacao da Nave
+
+	load r1, velInimigo
+	mod r1, r0, r1
+	cmp r1, r2		; if (mod(c/velInimigo)==0
+	ceq MoveAlien	; Chama Rotina de movimentacao do Inimigo
+
+	loadn r1, #1
+	mod r1, r0, r1
+	cmp r1, r2		; if (mod(c/1)==0
 	ceq MoveTiro	; Chama Rotina de movimentacao do Tiro
 
 	call Delay
@@ -108,14 +114,13 @@ MoveNave:
 	push r1
 	call MoveNave_RecalculaPos		; Recalcula Posicao da Nave
 
-; So' Apaga e Redesenha se (pos != posAnt)
-;	If (posNave != posAntNave)	{	
 	load r0, posNave
 	load r1, posAntNave
 	cmp r0, r1
 	jeq MoveNave_Skip
-		call MoveNave_Apaga
-		call MoveNave_Desenha		;}
+
+	call MoveNave_Apaga
+	call MoveNave_Desenha
 
 MoveNave_Skip:
 	pop r1
@@ -190,7 +195,7 @@ MoveNave_RecalculaPos:		; Recalcula posicao da Nave em funcao das Teclas pressio
 	cmp r1, r2
 	jeq MoveNave_RecalculaPos_Tiro
 	
-  MoveNave_RecalculaPos_Fim:	; Se nao for nenhuma tecla valida, vai embora
+MoveNave_RecalculaPos_Fim:	; Se nao for nenhuma tecla valida, vai embora
 	store posNave, r0
 	pop r3
 	pop r2
@@ -216,7 +221,10 @@ MoveNave_RecalculaPos_Tiro:
 	call MoveTiro_Apaga
 	loadn r1, #1			; Se Atirou:
 	store flagTiro, r1		; FlagTiro = 1
+	loadn r1, #36
+	sub r0, r0, r1
 	store posTiro, r0		; posTiro = posNave
+	add r0, r0, r1
 	jmp MoveNave_RecalculaPos_Fim	
 ;----------------------------------
 MoveNave_Desenha:	; Desenha caractere da Nave
@@ -259,6 +267,8 @@ MoveNave_Desenha:	; Desenha caractere da Nave
 	loadn r2, #3328			; Seleciona a COR da Mensagem
 	call Imprimestr
 
+	store posAntNave, r3
+
 	pop r3
 	pop r2
 	pop r1
@@ -275,15 +285,12 @@ MoveAlien:
 	;cmp r0, r1
 	;jeq MoveAlien_Skip
 	
-	loadn r2, #0
-	load r1, flagInimigo 
-	cmp r2, r1
-	jeq iniciaInimigo
+	load r1, flagInimigo 	; verficando se inimigo já existe
+	loadn r2, #1
+	cmp r1, r2				; se flagInimigo == 0 então cria um inimigo
+	jeq MoveAlien_Skip
 	
-	call moveInimigo
-	call MoveAlien_Skip
-	
-iniciaInimigo:
+	; se o inimigo não existe então gera um posição aleatória para ele começar
 	call gerarRand
 	load r0, rand
 	
@@ -294,9 +301,9 @@ iniciaInimigo:
 	store posInimigo, r0
 	store posAntInimigo, r0
 	store flagInimigo, r2
-	call moveInimigo
 	
 MoveAlien_Skip:
+	call moveInimigo
 	pop r2
 	pop r1
 	pop r0
@@ -308,18 +315,17 @@ moveInimigo:
 	push r2
 
 	load r0, posInimigo
-	loadn r1, #1003
+	loadn r1, #963
 	
-	; if(r0 > 1003) chegou na linha da nave
+	; if(r0 > 963) chegou na linha da nave
 	cmp r0, r1
-	jgr fimJogo 
+	jgr fimJogo
 	
 	loadn r2, #40
 	add r0, r0, r2
 	
 	store posInimigo, r0
 	call deletarInimigo
-	
 	call desenharInimigo
 	
 	pop r2
@@ -422,6 +428,7 @@ deletarInimigo:
 	pop r1
 	pop r0
 	rts
+	
 ;-------- Tiro ---------------
 MoveTiro:
 	push r0
@@ -451,17 +458,26 @@ MoveTiro_RecalculaPos:
 	push r0
 	push r1
 	push r2
+	push r3
 	
 	load r1, flagTiro	; Se Atirou, movimenta o tiro!
 	loadn r2, #1
 	cmp r1, r2			; If FlagTiro == 1  Movimenta o Tiro
 	jne MoveTiro_RecalculaPos_Fim2	; Se nao vai embora!
 	
-	load r0, posTiro	; TEsta se o Tiro Pegou no Alien
+	load r0, posTiro	; Testa se o Tiro Pegou no Alien
 	load r1, posInimigo
+	loadn r3, #80
+	add r1, r1, r3		; parte da frente do inimigo (parte dele mais inferior na tela)
 	cmp r0, r1			; IF posTiro == posInimigo  BOOM!!
-	jeq MoveTiro_RecalculaPos_Boom
+	jle MoveTiro_RecalculaPos_Skip
 	
+	loadn r3, #8
+	add r1, r1, r3
+	cmp r0, r1
+	jle MoveTiro_RecalculaPos_Boom
+	
+MoveTiro_RecalculaPos_Skip:
 	loadn r1, #40		; Testa condicoes de Contorno (se a posicao do tiro for > 40) 	
 	cmp r0, r1			; Se tiro chegou na ultima linha
 	jgr MoveTiro_RecalculaPos_Fim
@@ -471,26 +487,68 @@ MoveTiro_RecalculaPos:
 	store posTiro, r0
 	jmp MoveTiro_RecalculaPos_Fim2	
 
- MoveTiro_RecalculaPos_Boom:
+MoveTiro_RecalculaPos_Boom:
  	call deletarInimigo
  	call MoveTiro_Apaga
- 	call aumentarScore
+ 	
+ 	; --- atualizando a pontuação ---
+ 	load r0, score
+	inc r0
+	store score, r0
+	
+	loadn r1, #38	; posição da pontuação na tela
+	call imprimeNum
+	;--------------------------------
+	
+	loadn r2, #5
+ 	loadn r1, #0
+	mod r2, r2, r0
+	cmp r1, r2 				; if mod(score/5) == 0
+	ceq aumenta_velInimigo	; aumenta a velocidade do inimigo
+	
  	loadn r0, #0
- 	store flagTiro, r0	
- 	store flagInimigo, r0
+ 	store flagTiro, r0		; o tiro some
+ 	store flagInimigo, r0	; o inimigo também some então flag == 0
+ 	
  	store posTiro, r0
+ 	store posAntTiro, r0
+ 	
  	store posInimigo, r0
- 	call MoveTiro_RecalculaPos_Fim2
+ 	store posAntInimigo, r0
+ 	
+ 	jmp MoveTiro_RecalculaPos_Fim2
  
- MoveTiro_RecalculaPos_Fim:
+MoveTiro_RecalculaPos_Fim:
 	sub r0, r0, r1
 	store posTiro, r0
 	
- MoveTiro_RecalculaPos_Fim2:	
-	pop R2
-	pop R1
-	pop R0
+MoveTiro_RecalculaPos_Fim2:	
+	pop r3
+	pop r2
+	pop r1
+	pop r0
 	rts
+	
+aumenta_velInimigo:
+	push r0
+	push r1
+	
+	; se a velocidade do inimigo for 2 então não diminui mais (inversamente proporcional)
+	load r0, velInimigo
+	loadn r1, #1
+	cmp r0, r1
+	jeq aumenta_velInimigo_Skip
+	
+	; senão a velocidade diminui 3
+	loadn r1, #1
+	sub r0, r0, r1
+	store velInimigo, r0
+
+aumenta_velInimigo_Skip:
+	pop r1
+	pop r0
+	rts
+
 	;imprime Voce Venceu !!!
 	;loadn r0, #526
 	;loadn r1, #Msn0
@@ -579,13 +637,16 @@ Delay:
 	push r1
 	
 	loadn r1, #50  ; a
-   Delay_volta2:				;Quebrou o contador acima em duas partes (dois loops de decremento)
+	
+Delay_volta2:				;Quebrou o contador acima em duas partes (dois loops de decremento)
 	loadn r0, #3000	; b
-   Delay_volta: 
+	
+Delay_volta: 
 	dec r0					; (4*a + 6)b = 1000000  == 1 seg  em um clock de 1MHz
-	JNZ Delay_volta	
+	jnz Delay_volta
+		
 	dec r1
-	JNZ Delay_volta2
+	jnz Delay_volta2
 	
 	pop r1
 	pop r0
@@ -597,20 +658,21 @@ Delay:
 fimJogo:
 	call imprimirFimJogo
 	
-	inchar r0
-	loadn r1, #13  	; começa novo jogo se apertar 'Enter'
-	loadn r2, #'p'	; finaliza jogo se apertar 'p'
+	inchar r1
+	loadn r0, #'n'
+	cmp r0, r1				; tecla == 'n' ?
+	jeq fimPrograma			; encerra o programa
 	
-	cmp r0, r2
-	jeq fimPrograma
-	
-	cmp r0, r1
-	jne fimJogo
-	
+	loadn r0, #'s'
+	cmp r0, r1				; tecla == 's' ?
+	jne fimJogo				; se não for s volta para tela fimJogo
+
+	; se a tecla for s então recomeça o jogo
 	call apagaTelaInteira
 	jmp main
 	
-fimPrograma:	
+fimPrograma:
+	call apagaTelaInteira	
 	halt
 
 ;---- Fim do Programa Principal -----
@@ -628,31 +690,20 @@ imprimirFimJogo:
 	push r1
 	push r2
 	
-	loadn r0, #534			; Posicao na tela onde a mensagem sera' escrita (VAMOS MUDAR PRO MEIO)
-	loadn r1, #StrPerdeu	; Carrega r1 com o endereco do vetor que contem a mensagem
+	loadn r0, #525			; Posicao na tela onde a mensagem sera' escrita (VAMOS MUDAR PRO MEIO)
+	loadn r1, #msgFim1	; Carrega r1 com o endereco do vetor que contem a mensagem
 	loadn r2, #0			; Seleciona a COR da Mensagem
 	call Imprimestr
 	
-	loadn r0, #610				; Posicao na tela onde a mensagem sera' escrita
-	loadn r1, #StrPressEnter 	; Carrega r1 com o endereco do vetor que contem a mensagem
-	loadn r2, #0				; Seleciona a COR da Mensagem
-	call Imprimestr
+	load r0, score
+	loadn r1, #551
+	call imprimeNum
 	
-	loadn r0, #651					; Posicao na tela onde a mensagem sera' escrita
-	loadn r1, #StrJogarNovmente 	; Carrega r1 com o endereco do vetor que contem a mensagem
-	loadn r2, #0					; Seleciona a COR da Mensagem
+	loadn r0, #605
+	loadn r1, #msgFim2
+	loadn r2, #0
 	call Imprimestr
-	
-	loadn r0, #693		; Posicao na tela onde a mensagem sera' escrita
-	loadn r1, #StrOuP 	; Carrega r1 com o endereco do vetor que contem a mensagem
-	loadn r2, #0		; Seleciona a COR da Mensagem
-	call Imprimestr
-	
-	loadn r0, #730			; Posicao na tela onde a mensagem sera' escrita
-	loadn r1, #StrFinalizar ; Carrega r1 com o endereco do vetor que contem a mensagem
-	loadn r2, #0			; Seleciona a COR da Mensagem
-	call Imprimestr
-	
+		
 	pop r2
 	pop r1
 	pop r0
@@ -674,10 +725,14 @@ loop_apagaTelaInteira:
 aumentarScore:
 	push r0
 	push r1
-	push r2
-
 	
-	pop r2
+	load r0, score
+	inc r0
+	store score, r0
+	
+	loadn r1, #38	; posição da pontuação na tela
+	call imprimeNum
+	
 	pop r1
 	pop r0
 	rts
@@ -687,16 +742,23 @@ imprimirTelaInicio:
 	push r0	
 	push r1
 	push r2
+	push r3
 	
 	loadn r0, #1160		; Posicao na tela onde a mensagem sera' escrita
 	loadn r1, #superficie	; Carrega r1 com o endereco do vetor que contem a mensagem
 	loadn r2, #0		; Seleciona a COR da Mensagem
 	call Imprimestr
 
+	loadn r3, #0
+	store score, r3
+	nop
+	nop
+	nop
 	load r0, score
-	loadn r1, #39
+	loadn r1, #38
 	call imprimeNum
 	
+	pop r3
 	pop r2
 	pop r1
 	pop r0
@@ -740,7 +802,7 @@ ImprimestrSai:
 
 ; IMPRIMENUMERO
 ; r0 = num
-; r1 = pos na tela inicial(vai escrever da direita para a esquerda)
+; r1 = posição na tela inicial (vai escrever da direita para a esquerda)
 imprimeNum:
 	push r0
 	push r1
@@ -771,4 +833,3 @@ loop_ImprimeNum:
 	pop r1
 	pop r0
 	rts
-	
