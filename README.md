@@ -7,6 +7,7 @@ O objetivo do jogo é eliminar a quantidade máxima de naves inimigas, o que faz
 As teclas A e S são utilizadas para controlar a nave do jogador. E a tecla de espaço serve para atirar os lasers que devem acertar o inimigo.
 
 ## Vídeo do Jogo
+https://youtu.be/AcfwpU20jJ4
 
 ## Autores:
 Isadora Carolina Siebert<br>
